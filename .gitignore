@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Sensitive
+.env
+results.json
+
+# Data files (these were the problem)
+*.xlsx
+*.xls
+*.db
+*.sqlite
+data/raw/
+data/json/scenarios.json
+
+# IDE
+.vscode/
+.idea/
