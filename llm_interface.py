@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class GroqLLM:
-    def __init__(self, model="openai/gpt-oss-120b"):
+    def __init__(self, model="llama-3.1-8b-instant"):
         api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
             print("⚠️ Error: GROQ_API_KEY not found. Check your .env file.")
