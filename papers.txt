@@ -1,0 +1,4 @@
+Neuro-symbolic AI: NeSy surveys (e.g., Garcez et al., 2023; Hitzler et al., 2022); LLM + symbols (e.g., Neuro-Symbolic Causal Language Modules, 2025).
+Causal reasoning in LLMs: Kiciman (2023), Jin (2024), Berglund (2023 reversal curse), Dong (2025 CARE for causal experts).
+Validation layers: Symbolic checkers (e.g., Logic-LM, Pan 2023; CausalVLBench for visuals if multimodal).
+Urban logistics ML: Papers on causal inference in supply chains (e.g., Chai et al., 2025 on hazmat transport; Bridgelall 2024 on traffic countermeasures). Datasets: Use public ones like NYC Taxi, Uber Movement, or simulate with SUMO (traffic simulator).

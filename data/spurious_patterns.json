@@ -1,0 +1,14 @@
+{
+  "patterns": [
+    {
+      "name": "day_of_week",
+      "regex": "\\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\\b",
+      "reason": "Day of week is correlated but not causal"
+    },
+    {
+      "name": "vehicle_color",
+      "regex": "\\b(red|blue|white|black|silver|grey|yellow)\\s+(car|sedan|suv|truck|van)\\b",
+      "reason": "Vehicle color is not causally related"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "templates": [
+    {
+      "category": "Weather",
+      "required": ["weather_event", "road_condition", "driver_action"],
+      "examples": {
+        "hydroplaning": ["heavy_rain", "standing_water", "hydroplaning_physics", "insufficient_following_distance"],
+        "black_ice": ["sub_freezing_temperature", "black_ice_formation", "reduced_friction", "curved_road_section"],
+        "fog": ["dense_fog", "reduced_visibility", "wet_road", "insufficient_following_distance"]
+      }
+    },
+    {
+      "category": "Traffic Accident",
+      "required": ["primary_cause", "contributing_factor", "outcome"],
+      "examples": {
+        "red_light": ["red_light_violation", "failure_to_stop", "perpendicular_impact"],
+        "lane_change": ["unsafe_lane_change", "no_signal", "insufficient_following_distance"],
+        "fatigue": ["fatigue", "lane_departure", "head_on_collision"]
+      }
+    },
+    {
+      "category": "Road Maintenance",
+      "required": ["maintenance_activity", "safety_failure", "resulting_hazard"],
+      "examples": {
+        "unmarked_closure": ["unmarked_lane_closure", "missing_advance_warning", "sudden_taper"],
+        "barrier_placement": ["barrier_encroachment", "improper_offset", "lane_width_violation"],
+        "debris_hazard": ["debris_left", "inadequate_cleanup", "tire_puncture"]
+      }
+    },
+    {
+      "category": "Public Event",
+      "required": ["event_type", "capacity_issue", "traffic_impact"],
+      "examples": {
+        "mass_departure": ["simultaneous_departure", "exit_capacity_exceeded", "queue_propagation"],
+        "parking_overflow": ["parking_capacity_exceeded", "shoulder_parking_encroachment", "lane_reduction"],
+        "security_bottleneck": ["security_screening", "processing_capacity_exceeded", "ingress_queue"]
+      }
+    }
+  ]
+}

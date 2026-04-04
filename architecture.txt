@@ -1,0 +1,911 @@
+🛡️ Causal-Guard: Complete System Architecture
+Executive Summary
+Causal-Guard is a production-grade neuro-symbolic validation layer that intercepts LLM-generated explanations and verifies them against five causal constraints (C₁–C₅) before they reach decision-makers. The system is designed for high throughput, low latency, and explainable failures, making it suitable for integration into urban logistics platforms, traffic management systems, and other safety-critical applications.
+
+This document provides a complete architectural specification from data ingestion to deployment, including every component, interface, data structure, and operational consideration.
+
+📋 Table of Contents
+System Overview
+
+High-Level Architecture
+
+Component Specifications
+
+3.1 Ingestion Layer
+
+3.2 LLM Interface
+
+3.3 Causal-Guard Core
+
+3.4 Knowledge Base
+
+3.5 Output Layer
+
+3.6 Monitoring & Analytics
+
+Data Models
+
+API Specifications
+
+Deployment Architecture
+
+Performance Requirements
+
+Security Considerations
+
+Integration Patterns
+
+Development Roadmap
+
+1. System Overview
+1.1 Purpose
+Causal-Guard validates LLM-generated explanations for urban transportation incidents against five causal admissibility constraints:
+
+Constraint	Description	Validation Method
+C₁: Temporal Precedence	Cause must precede effect	Rule-based temporal reasoning
+C₂: Spatial Relevance	Cause must be geographically plausible	Graph-based spatial reasoning
+C₃: Mechanistic Plausibility	Causal mechanism must be physically possible	Hybrid (embedding + rules)
+C₄: Non-Spuriousness	Must avoid correlational fallacies	Statistical + rule-based
+C₅: Completeness	Must include all necessary factors	Template matching + ML
+1.2 Design Goals
+Goal	Target	Rationale
+Latency	<500ms per explanation	Real-time decision support
+Throughput	100+ requests/second	Production scale
+Precision	>90%	Avoid false alarms
+Recall	>80%	Catch most violations
+Explainability	Human-readable violation reasons	Trust and debugging
+Extensibility	Plugin architecture	Add new checkers easily
+Deployability	Docker + Kubernetes	Cloud/on-prem flexibility
+2. High-Level Architecture
+text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              Client Applications                             │
+│              (Traffic Management, Logistics Platforms, APIs)                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            API Gateway (Kong/NGINX)                          │
+│                         Rate Limiting | Auth | Routing                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          Causal-Guard Core Service                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │   Ingestion  │─▶│    C₁-C₅     │─▶│   Aggregator │─▶│    Output    │    │
+│  │    Layer     │  │   Checkers   │  │              │  │   Formatter  │    │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘    │
+│         │                 │                 │                 │             │
+│         ▼                 ▼                 ▼                 ▼             │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                        Message Queue (RabbitMQ)                       │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+│                                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │   Temporal   │  │   Spatial    │  │   Mechanism  │  │   Completeness│    │
+│  │   Checker    │  │   Checker    │  │   Checker    │  │   Checker     │    │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘    │
+│         │                 │                 │                 │             │
+│         ▼                 ▼                 ▼                 ▼             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │   Spurious   │  │   Knowledge  │  │   Road Graph │  │   Template   │    │
+│  │   Checker    │  │     Base     │  │    Service   │  │    Store     │    │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘    │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         Supporting Infrastructure                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │   PostgreSQL │  │   Redis      │  │   Elastic    │  │   Prometheus │    │
+│  │   (Metadata) │  │   (Cache)    │  │   (Logs)     │  │   (Metrics)  │    │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘    │
+└─────────────────────────────────────────────────────────────────────────────┘
+3. Component Specifications
+3.1 Ingestion Layer
+3.1.1 Purpose
+Receive, validate, and normalize incoming requests before processing.
+
+3.1.2 Input Format
+json
+{
+  "request_id": "uuid-v4",
+  "timestamp": "2026-03-07T10:30:00Z",
+  "scenario": {
+    "id": "WD-05",
+    "description": "At 6:12 AM on Saturday...",
+    "context": {
+      "timeline": [
+        {"event": "temperature_drop", "time": "2026-03-07T00:00:00Z", "value": "-2°C"},
+        {"event": "accident", "time": "2026-03-07T06:12:00Z"}
+      ],
+      "locations": [
+        {"name": "Al Ain Road (E95)", "type": "highway", "coordinates": [24.2075, 55.7442]},
+        {"name": "Al Qu'a exit", "type": "exit", "coordinates": [24.2012, 55.7389]}
+      ],
+      "road_network": {
+        "segment_id": "E95-78",
+        "geometry": "curve",
+        "gradient": 0.03
+      },
+      "environment": {
+        "weather": "clear",
+        "temperature": -2,
+        "visibility": 10000,
+        "road_condition": "dry"
+      }
+    },
+    "minimal_sufficient_set": ["sub_freezing_temperature", "black_ice_formation", "reduced_friction", "curved_road_section"]
+  },
+  "llm_response": {
+    "model": "llama-3.3-70b",
+    "prompt": "You are analyzing...",
+    "explanation": "The incident was caused by black ice patches that formed due to overnight temperatures dropping to -2°C...",
+    "latency_ms": 1234
+  },
+  "config": {
+    "checkers": ["C1", "C2", "C3", "C4", "C5"],
+    "thresholds": {
+      "c3_similarity": 0.7,
+      "c5_coverage": 0.8
+    },
+    "output_format": "detailed"
+  }
+}
+3.1.3 Validation Rules
+request_id must be UUID v4
+
+timestamp must be within 5 minutes of current time
+
+scenario.id must exist in scenario registry
+
+llm_response.explanation must be non-empty string
+
+config.checkers must be subset of ["C1","C2","C3","C4","C5"]
+
+3.1.4 Output
+json
+{
+  "request_id": "uuid-v4",
+  "status": "accepted|rejected",
+  "validation_errors": ["list of validation errors if rejected"],
+  "queue_position": 42
+}
+3.1.5 Implementation
+python
+# ingestion_layer.py
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, validator
+import uuid
+import redis
+import json
+
+app = FastAPI()
+cache = redis.Redis(host='redis', port=6379, decode_responses=True)
+
+class IngestionRequest(BaseModel):
+    request_id: str
+    timestamp: str
+    scenario: dict
+    llm_response: dict
+    config: dict
+
+    @validator('request_id')
+    def validate_uuid(cls, v):
+        try:
+            uuid.UUID(v)
+        except ValueError:
+            raise ValueError('Invalid UUID')
+        return v
+
+@app.post("/ingest")
+async def ingest(request: IngestionRequest):
+    # Validate
+    validation_errors = []
+    if not request.llm_response.get('explanation'):
+        validation_errors.append("Missing explanation")
+    
+    if validation_errors:
+        return {
+            "request_id": request.request_id,
+            "status": "rejected",
+            "validation_errors": validation_errors
+        }
+    
+    # Cache request
+    cache.setex(
+        f"request:{request.request_id}", 
+        3600,  # 1 hour TTL
+        json.dumps(request.dict())
+    )
+    
+    # Push to queue
+    # ... (RabbitMQ integration)
+    
+    return {
+        "request_id": request.request_id,
+        "status": "accepted",
+        "queue_position": 42
+    }
+3.2 LLM Interface
+3.2.1 Purpose
+Abstract away LLM provider details, allowing Causal-Guard to work with any model.
+
+3.2.2 Supported Providers
+Provider	Models	Authentication
+Groq	Llama 3, Mixtral, Gemma	API Key
+OpenAI	GPT-4, GPT-3.5	API Key
+Anthropic	Claude 3	API Key
+Google	Gemini 1.5/2.0	API Key
+Local	Hugging Face models	None
+3.2.3 Interface Definition
+python
+# llm_interface.py
+from abc import ABC, abstractmethod
+
+class LLMProvider(ABC):
+    @abstractmethod
+    async def generate(
+        self, 
+        prompt: str, 
+        temperature: float = 0.0,
+        max_tokens: int = 500
+    ) -> dict:
+        """Generate explanation from prompt"""
+        pass
+
+class GroqProvider(LLMProvider):
+    def __init__(self, api_key: str, model: str = "llama3-70b-8192"):
+        self.client = Groq(api_key=api_key)
+        self.model = model
+    
+    async def generate(self, prompt: str, temperature=0.0, max_tokens=500):
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
+        return {
+            "explanation": response.choices[0].message.content,
+            "model": self.model,
+            "latency_ms": response.usage.total_time,
+            "tokens": {
+                "prompt": response.usage.prompt_tokens,
+                "completion": response.usage.completion_tokens
+            }
+        }
+
+class LLMFactory:
+    @staticmethod
+    def get_provider(provider_name: str, config: dict) -> LLMProvider:
+        if provider_name == "groq":
+            return GroqProvider(config['api_key'], config.get('model'))
+        elif provider_name == "openai":
+            return OpenAIProvider(config['api_key'], config.get('model'))
+        # ... etc.
+3.3 Causal-Guard Core
+3.3.1 Orchestrator
+The orchestrator manages the validation pipeline, coordinating all checkers.
+
+python
+# orchestrator.py
+class CausalGuardOrchestrator:
+    def __init__(self, config: dict):
+        self.checkers = {
+            'C1': TemporalChecker(config.get('c1_config', {})),
+            'C2': SpatialChecker(config.get('c2_config', {})),
+            'C3': MechanismChecker(config.get('c3_config', {})),
+            'C4': SpuriousChecker(config.get('c4_config', {})),
+            'C5': CompletenessChecker(config.get('c5_config', {}))
+        }
+        self.kb = KnowledgeBase(config['kb_path'])
+        self.road_graph = RoadGraphService(config['graph_db_url'])
+        self.cache = CacheService(config['redis_url'])
+        self.metrics = MetricsCollector()
+    
+    async def validate(
+        self, 
+        request_id: str,
+        scenario: dict,
+        explanation: str,
+        enabled_checkers: list
+    ) -> dict:
+        """Run enabled checkers and aggregate results"""
+        
+        start_time = time.time()
+        results = {}
+        violations = []
+        
+        # Check cache first
+        cached = await self.cache.get(f"validation:{request_id}")
+        if cached:
+            return cached
+        
+        # Run checkers in parallel
+        tasks = []
+        for checker_id in enabled_checkers:
+            if checker_id in self.checkers:
+                tasks.append(
+                    self._run_checker(
+                        checker_id, 
+                        self.checkers[checker_id],
+                        scenario, 
+                        explanation
+                    )
+                )
+        
+        checker_results = await asyncio.gather(*tasks)
+        
+        # Aggregate results
+        for result in checker_results:
+            results[result['checker_id']] = result
+            if not result['passed']:
+                violations.append({
+                    'constraint': result['checker_id'],
+                    'reason': result['reason'],
+                    'details': result.get('details', {})
+                })
+        
+        # Determine overall status
+        status = 'PASS' if len(violations) == 0 else 'FAIL'
+        
+        output = {
+            'request_id': request_id,
+            'timestamp': datetime.utcnow().isoformat(),
+            'status': status,
+            'violations': violations,
+            'results': results,
+            'latency_ms': int((time.time() - start_time) * 1000),
+            'checkers_run': enabled_checkers
+        }
+        
+        # Cache result
+        await self.cache.set(
+            f"validation:{request_id}", 
+            output, 
+            ttl=3600
+        )
+        
+        # Collect metrics
+        self.metrics.record(request_id, output)
+        
+        return output
+    
+    async def _run_checker(self, checker_id, checker, scenario, explanation):
+        try:
+            result = await checker.check(scenario, explanation)
+            return {
+                'checker_id': checker_id,
+                'passed': result['passed'],
+                'reason': result.get('reason', ''),
+                'details': result.get('details', {}),
+                'latency_ms': result.get('latency_ms', 0)
+            }
+        except Exception as e:
+            # Log error, return as violation
+            return {
+                'checker_id': checker_id,
+                'passed': False,
+                'reason': f'Checker error: {str(e)}',
+                'error': True
+            }
+3.4 Individual Checkers
+3.4.1 C₁ Checker (Temporal Precedence)
+python
+# checkers/c1_temporal.py
+import re
+from dateutil import parser
+from datetime import datetime
+
+class TemporalChecker:
+    def __init__(self, config):
+        self.time_extractor = TimeExtractor()
+        self.tolerance_seconds = config.get('tolerance_seconds', 60)
+    
+    async def check(self, scenario: dict, explanation: str) -> dict:
+        start = time.time()
+        
+        # Step 1: Extract all causal claims from explanation
+        claims = self._extract_causal_claims(explanation)
+        
+        # Step 2: Extract timeline from scenario
+        timeline = self._build_timeline(scenario)
+        
+        violations = []
+        
+        for claim in claims:
+            cause_time = self._find_event_time(claim['cause'], timeline)
+            effect_time = self._find_event_time(claim['effect'], timeline)
+            
+            if cause_time and effect_time:
+                # Check temporal precedence
+                if cause_time >= effect_time:
+                    violations.append({
+                        'claim': f"{claim['cause']} caused {claim['effect']}",
+                        'cause_time': cause_time.isoformat(),
+                        'effect_time': effect_time.isoformat(),
+                        'reason': f"Cause occurs after effect"
+                    })
+            elif cause_time and not effect_time:
+                # Effect not in timeline - could be derived
+                pass
+            elif not cause_time and effect_time:
+                # Cause not in timeline - could be inferred
+                pass
+        
+        passed = len(violations) == 0
+        
+        return {
+            'passed': passed,
+            'reason': 'All temporal relationships valid' if passed else f'{len(violations)} temporal violation(s)',
+            'details': {
+                'claims_extracted': len(claims),
+                'violations': violations
+            },
+            'latency_ms': int((time.time() - start) * 1000)
+        }
+    
+    def _extract_causal_claims(self, text: str) -> list:
+        """Extract (cause, effect) pairs using dependency parsing"""
+        # Pattern-based extraction for MVP
+        patterns = [
+            (r'(.+?)\s+caused\s+(.+)', 'caused'),
+            (r'(.+?)\s+led to\s+(.+)', 'led to'),
+            (r'(.+?)\s+resulted in\s+(.+)', 'resulted in'),
+            (r'due to\s+(.+?),\s+(.+)', 'due to'),
+        ]
+        
+        claims = []
+        for pattern, rel in patterns:
+            matches = re.findall(pattern, text)
+            for match in matches:
+                claims.append({
+                    'cause': match[0].strip(),
+                    'effect': match[1].strip(),
+                    'relation': rel
+                })
+        
+        return claims
+    
+    def _build_timeline(self, scenario: dict) -> dict:
+        """Build timeline of events from scenario context"""
+        timeline = {}
+        for event in scenario.get('context', {}).get('timeline', []):
+            time = parser.parse(event['time'])
+            timeline[event['event']] = {
+                'time': time,
+                'description': event.get('description', ''),
+                'value': event.get('value')
+            }
+        return timeline
+    
+    def _find_event_time(self, text: str, timeline: dict) -> datetime:
+        """Find the time of an event mentioned in text"""
+        # Simple keyword matching for MVP
+        for event_name, event_data in timeline.items():
+            if event_name.lower() in text.lower():
+                return event_data['time']
+        
+        # Try to extract absolute time from text
+        time_match = re.search(r'(\d{1,2}):(\d{2})\s*(AM|PM)?', text)
+        if time_match:
+            # Parse time (simplified)
+            hour = int(time_match.group(1))
+            minute = int(time_match.group(2))
+            meridian = time_match.group(3)
+            if meridian and meridian.upper() == 'PM' and hour < 12:
+                hour += 12
+            # Assume same date as scenario
+            scenario_date = datetime.now().date()  # Should come from scenario
+            return datetime.combine(scenario_date, datetime.min.time().replace(hour=hour, minute=minute))
+        
+        return None
+3.4.2 C₂ Checker (Spatial Relevance)
+python
+# checkers/c2_spatial.py
+import re
+import aiohttp
+from math import radians, sin, cos, sqrt, atan2
+
+class SpatialChecker:
+    def __init__(self, config):
+        self.graph_service_url = config['graph_service_url']
+        self.max_distance_km = config.get('max_distance_km', 2.0)
+        self.require_network_connectivity = config.get('require_network_connectivity', True)
+    
+    async def check(self, scenario: dict, explanation: str) -> dict:
+        start = time.time()
+        
+        # Step 1: Extract location entities from explanation
+        mentioned_locations = self._extract_locations(explanation)
+        
+        # Step 2: Get scenario locations
+        scenario_locations = scenario.get('context', {}).get('locations', [])
+        
+        # Step 3: Check each mentioned location
+        violations = []
+        
+        for loc in mentioned_locations:
+            # Find matching scenario location
+            matched = False
+            for scenario_loc in scenario_locations:
+                if self._locations_match(loc, scenario_loc):
+                    matched = True
+                    break
+            
+            if not matched:
+                # Check if this location is plausible
+                plausible = await self._check_plausibility(
+                    loc, 
+                    scenario_locations,
+                    scenario.get('context', {}).get('road_network', {})
+                )
+                
+                if not plausible['is_plausible']:
+                    violations.append({
+                        'location': loc['text'],
+                        'reason': plausible['reason'],
+                        'distance_km': plausible.get('distance_km')
+                    })
+        
+        passed = len(violations) == 0
+        
+        return {
+            'passed': passed,
+            'reason': 'All locations spatially relevant' if passed else f'{len(violations)} spatial violation(s)',
+            'details': {
+                'mentioned_locations': mentioned_locations,
+                'violations': violations
+            },
+            'latency_ms': int((time.time() - start) * 1000)
+        }
+    
+    def _extract_locations(self, text: str) -> list:
+        """Extract location mentions using NER and patterns"""
+        # Simple pattern-based extraction for MVP
+        patterns = [
+            r'on\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            r'at\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            r'near\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+        ]
+        
+        locations = []
+        for pattern in patterns:
+            matches = re.findall(pattern, text)
+            for match in matches:
+                locations.append({
+                    'text': match,
+                    'pattern': pattern
+                })
+        
+        return locations
+    
+    def _locations_match(self, mentioned: dict, scenario_loc: dict) -> bool:
+        """Check if mentioned location matches scenario location"""
+        mentioned_text = mentioned['text'].lower()
+        scenario_name = scenario_loc.get('name', '').lower()
+        
+        # Exact match
+        if mentioned_text == scenario_name:
+            return True
+        
+        # Partial match (e.g., "SZR" matches "Sheikh Zayed Road")
+        if mentioned_text in scenario_name or scenario_name in mentioned_text:
+            return True
+        
+        return False
+    
+    async def _check_plausibility(self, loc: dict, scenario_locs: list, road_network: dict) -> dict:
+        """Check if a mentioned location is plausible given scenario context"""
+        
+        # If we have coordinates, calculate distance to nearest scenario location
+        if 'coordinates' in loc:
+            min_distance = float('inf')
+            nearest = None
+            
+            for s_loc in scenario_locs:
+                if 'coordinates' in s_loc:
+                    dist = self._haversine_distance(
+                        loc['coordinates'],
+                        s_loc['coordinates']
+                    )
+                    if dist < min_distance:
+                        min_distance = dist
+                        nearest = s_loc
+            
+            if min_distance <= self.max_distance_km:
+                return {
+                    'is_plausible': True,
+                    'distance_km': min_distance,
+                    'reason': f'Within {min_distance:.2f}km of {nearest["name"]}'
+                }
+            else:
+                return {
+                    'is_plausible': False,
+                    'distance_km': min_distance,
+                    'reason': f'Location is {min_distance:.2f}km from nearest scenario location'
+                }
+        
+        # Without coordinates, assume plausible but flag for review
+        return {
+            'is_plausible': True,
+            'reason': 'No coordinates available for verification'
+        }
+    
+    def _haversine_distance(self, coord1, coord2):
+        """Calculate great-circle distance between two coordinates"""
+        lat1, lon1 = radians(coord1[0]), radians(coord1[1])
+        lat2, lon2 = radians(coord2[0]), radians(coord2[1])
+        
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        c = 2 * atan2(sqrt(a), sqrt(1-a))
+        
+        # Earth radius in km
+        R = 6371
+        return R * c
+3.4.3 C₃ Checker (Mechanistic Plausibility)
+python
+# checkers/c3_mechanism.py
+import numpy as np
+from sentence_transformers import SentenceTransformer
+import faiss
+import json
+import re
+
+class MechanismChecker:
+    def __init__(self, config):
+        self.model = SentenceTransformer(config.get('embedding_model', 'all-MiniLM-L6-v2'))
+        self.kb_path = config['kb_path']
+        self.similarity_threshold = config.get('similarity_threshold', 0.7)
+        self.top_k = config.get('top_k', 5)
+        
+        # Load knowledge base
+        self.kb = self._load_knowledge_base()
+        
+        # Build FAISS index
+        self.index = self._build_index()
+        
+        # Rule-based overrides for threshold cases
+        self.rules = self._load_rules()
+    
+    def _load_knowledge_base(self):
+        with open(self.kb_path, 'r') as f:
+            data = json.load(f)
+        return data['mechanisms']
+    
+    def _build_index(self):
+        # Encode all mechanism descriptions
+        descriptions = [m['description'] for m in self.kb]
+        embeddings = self.model.encode(descriptions)
+        
+        # Build FAISS index
+        dimension = embeddings.shape[1]
+        index = faiss.IndexFlatIP(dimension)  # Inner product for cosine similarity
+        index.add(embeddings)
+        
+        return index
+    
+    def _load_rules(self):
+        """Load rule-based overrides for specific mechanisms"""
+        return [
+            {
+                'name': 'black_ice_impossible',
+                'pattern': r'black ice.*?(?:formed|developed).*?(\d+)°C',
+                'condition': lambda match: int(match.group(1)) > 0,
+                'reason': 'Black ice cannot form above 0°C'
+            },
+            {
+                'name': 'hydroplaning_requires_water',
+                'pattern': r'hydroplan(?:ed|ing).*?(?:without|no) (?:water|rain|standing water)',
+                'condition': lambda match: True,
+                'reason': 'Hydroplaning requires standing water'
+            }
+        ]
+    
+    async def check(self, scenario: dict, explanation: str) -> dict:
+        start = time.time()
+        
+        # Step 1: Extract mechanism description from explanation
+        mechanism_text = self._extract_mechanism(explanation)
+        
+        if not mechanism_text:
+            return {
+                'passed': True,
+                'reason': 'No mechanism described to verify',
+                'latency_ms': int((time.time() - start) * 1000)
+            }
+        
+        # Step 2: Check rule-based overrides first
+        for rule in self.rules:
+            match = re.search(rule['pattern'], explanation, re.IGNORECASE)
+            if match and rule['condition'](match):
+                return {
+                    'passed': False,
+                    'reason': rule['reason'],
+                    'details': {
+                        'rule': rule['name'],
+                        'matched_text': match.group(0)
+                    },
+                    'latency_ms': int((time.time() - start) * 1000)
+                }
+        
+        # Step 3: Embed and retrieve similar mechanisms
+        embedding = self.model.encode([mechanism_text])
+        distances, indices = self.index.search(embedding, self.top_k)
+        
+        # Step 4: Check similarity threshold
+        best_similarity = float(distances[0][0])
+        best_mechanism = self.kb[indices[0][0]] if len(indices[0]) > 0 else None
+        
+        if best_similarity >= self.similarity_threshold:
+            # Step 5: Verify against mechanism conditions
+            passed = self._verify_conditions(
+                mechanism_text, 
+                best_mechanism,
+                scenario
+            )
+            
+            if passed:
+                return {
+                    'passed': True,
+                    'reason': f'Matches known mechanism: {best_mechanism["name"]}',
+                    'details': {
+                        'matched_mechanism': best_mechanism['name'],
+                        'similarity': float(best_similarity)
+                    },
+                    'latency_ms': int((time.time() - start) * 1000)
+                }
+            else:
+                return {
+                    'passed': False,
+                    'reason': f'Mechanism similar to {best_mechanism["name"]} but conditions not met',
+                    'details': {
+                        'matched_mechanism': best_mechanism['name'],
+                        'similarity': float(best_similarity)
+                    },
+                    'latency_ms': int((time.time() - start) * 1000)
+                }
+        else:
+            return {
+                'passed': False,
+                'reason': f'No known mechanism matches (best similarity: {best_similarity:.2f})',
+                'details': {
+                    'best_similarity': float(best_similarity),
+                    'mechanism_text': mechanism_text
+                },
+                'latency_ms': int((time.time() - start) * 1000)
+            }
+    
+    def _extract_mechanism(self, text: str) -> str:
+        """Extract the mechanism description from explanation"""
+        # Look for sentences describing how/why
+        sentences = text.split('.')
+        mechanism_sentences = []
+        
+        for sent in sentences:
+            if any(word in sent.lower() for word in ['because', 'due to', 'caused', 'resulted', 'led to']):
+                mechanism_sentences.append(sent.strip())
+        
+        return '. '.join(mechanism_sentences) if mechanism_sentences else text
+    
+    def _verify_conditions(self, mechanism_text: str, mechanism: dict, scenario: dict) -> bool:
+        """Verify that mechanism conditions are met in the scenario"""
+        # Extract relevant scenario conditions
+        temp = scenario.get('context', {}).get('environment', {}).get('temperature')
+        
+        # Check against mechanism conditions
+        if mechanism['name'] == 'black_ice_formation':
+            if temp is not None and temp > 0:
+                return False
+        
+        return True
+3.4.4 C₄ Checker (Non-Spuriousness)
+python
+# checkers/c4_spurious.py
+import re
+import json
+import math
+
+class SpuriousChecker:
+    def __init__(self, config):
+        self.pmi_table_path = config['pmi_table_path']
+        self.pmi_threshold = config.get('pmi_threshold', 2.0)
+        self.spurious_patterns = self._load_spurious_patterns()
+        self.pmi_table = self._load_pmi_table()
+    
+    def _load_spurious_patterns(self):
+        """Load common spurious correlation patterns"""
+        return [
+            {
+                'pattern': r'\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b',
+                'type': 'day_of_week',
+                'reason': 'Day of week is correlated but not causal'
+            },
+            {
+                'pattern': r'\b(red|blue|white|black|silver|grey)\s+(car|sedan|suv|truck|van)\b',
+                'type': 'vehicle_color',
+                'reason': 'Vehicle color is not causally related to accidents'
+            },
+            {
+                'pattern': r'\b(ramadan|eid|new year|christmas|national day)\b',
+                'type': 'holiday',
+                'reason': 'Holiday may correlate with traffic patterns but is not the cause'
+            }
+        ]
+    
+    def _load_pmi_table(self):
+        with open(self.pmi_table_path, 'r') as f:
+            return json.load(f)
+    
+    async def check(self, scenario: dict, explanation: str) -> dict:
+        start = time.time()
+        
+        violations = []
+        
+        # Step 1: Check for spurious patterns
+        for pattern in self.spurious_patterns:
+            matches = re.findall(pattern['pattern'], explanation, re.IGNORECASE)
+            for match in matches:
+                # Check if this factor is actually causal in the scenario
+                if not self._is_causal_in_scenario(match, scenario):
+                    violations.append({
+                        'factor': match,
+                        'type': pattern['type'],
+                        'reason': pattern['reason']
+                    })
+        
+        # Step 2: Check for high PMI but low justification
+        causal_pairs = self._extract_causal_pairs(explanation)
+        for cause, effect in causal_pairs:
+            pmi = self._get_pmi(cause, effect)
+            if pmi and pmi > self.pmi_threshold:
+                justification = self._assess_justification(explanation, cause, effect)
+                if justification < 0.3:
+                    violations.append({
+                        'cause': cause,
+                        'effect': effect,
+                        'pmi': pmi,
+                        'justification': justification,
+                        'reason': f'High correlation (PMI={pmi:.2f}) but low mechanistic justification'
+                    })
+        
+        passed = len(violations) == 0
+        
+        return {
+            'passed': passed,
+            'reason': 'No spurious correlations detected' if passed else f'{len(violations)} spurious correlation(s)',
+            'details': {
+                'violations': violations
+            },
+            'latency_ms': int((time.time() - start) * 1000)
+        }
+    
+    def _is_causal_in_scenario(self, factor: str, scenario: dict) -> bool:
+        """Check if a factor is actually causal in the scenario"""
+        # Check non-causal correlates list
+        non_causal = scenario.get('Non_Causal_Correlates', '').lower()
+        if factor.lower() in non_causal:
+            return False
+        
+        # Check if it's in the minimal sufficient set
+        minimal_set = scenario.get('Minimal_Sufficient_Set', '')
+        if factor.lower() in minimal_set.lower():
+            return True
+        
+        return False
+    
+    def _extract_causal_pairs(self, text: str) -> list:
+        """Extract (cause, effect) pairs for PMI checking"""
+        pairs = []
+        patterns = [
+            (r'(.+?)\s+caused\s+(.+)',),
+            (r'(.+?)\s+led

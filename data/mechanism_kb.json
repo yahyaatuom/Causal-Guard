@@ -1,0 +1,296 @@
+{
+  "mechanisms": [
+    {
+      "name": "black_ice_formation",
+      "description": "Black ice forms when temperatures drop below freezing (≤0°C) on wet surfaces",
+      "conditions": {
+        "temperature_max": 0,
+        "requires_moisture": true
+      },
+      "keywords": ["black ice", "ice patches", "icy road"],
+      "valid_examples": ["-2°C", "0°C", "below freezing"],
+      "invalid_examples": ["2°C", "5°C", "above freezing"],
+      "physical_law": "Water freezes at 0°C at standard pressure"
+    },
+    {
+      "name": "hydroplaning",
+      "description": "Hydroplaning occurs when water depth exceeds tire tread depth, lifting tire from pavement",
+      "conditions": {
+        "requires_water": true,
+        "requires_speed": true
+      },
+      "keywords": ["hydroplaning", "aquaplaning", "standing water", "water film"],
+      "valid_examples": ["heavy rain", "standing water", "flooded road"],
+      "invalid_examples": ["light drizzle", "dry road"],
+      "physical_law": "Hydrodynamic pressure lifts tire when water can't be displaced"
+    },
+    {
+      "name": "crosswind_rollover",
+      "description": "High-sided vehicles can overturn when crosswind force exceeds stability threshold",
+      "conditions": {
+        "requires_high_sides": true,
+        "wind_speed_min": 50
+      },
+      "keywords": ["crosswind", "gusts", "high-sided", "overturned", "rollover"],
+      "valid_examples": ["empty truck", "high-sided vehicle", "exposed highway"],
+      "invalid_examples": ["low-profile car", "sheltered area"],
+      "physical_law": "Overturning moment = wind pressure × side area × height"
+    },
+    {
+      "name": "fog_reduced_visibility",
+      "description": "Dense fog reduces visibility, increasing stopping distance and reaction time",
+      "conditions": {
+        "visibility_max": 100
+      },
+      "keywords": ["fog", "dense fog", "visibility", "reduced visibility"],
+      "valid_examples": ["dense fog", "morning fog", "coastal fog"],
+      "invalid_examples": ["clear conditions"],
+      "physical_law": "Stopping distance = reaction distance + braking distance"
+    },
+    {
+      "name": "wet_road_reduced_friction",
+      "description": "Wet roads reduce tire friction, increasing stopping distance by 30-50%",
+      "conditions": {
+        "requires_water": true
+      },
+      "keywords": ["wet road", "slick surface", "reduced traction", "damp"],
+      "valid_examples": ["rain", "drizzle", "morning mist"],
+      "invalid_examples": ["dry road"],
+      "physical_law": "Friction coefficient decreases by 30-50% on wet pavement"
+    },
+    {
+      "name": "brake_fade",
+      "description": "Prolonged braking on descent causes brake overheating and reduced stopping power",
+      "conditions": {
+        "requires_descent": true,
+        "requires_prolonged_braking": true
+      },
+      "keywords": ["brake fade", "brake failure", "overheating", "descending", "steep gradient"],
+      "valid_examples": ["mountain road", "steep hill", "heavy load"],
+      "invalid_examples": ["flat road", "short stop"],
+      "physical_law": "Brake friction coefficient decreases exponentially with temperature"
+    },
+    {
+      "name": "tire_blowout_asymmetric_drag",
+      "description": "Sudden tire deflation creates asymmetric drag, pulling vehicle toward failed tire",
+      "conditions": {
+        "requires_blowout": true
+      },
+      "keywords": ["blowout", "tire failure", "tire burst"],
+      "valid_examples": ["front tire", "high speed", "underinflation"],
+      "invalid_examples": ["slow leak"],
+      "physical_law": "Rolling resistance increases dramatically on failed tire"
+    },
+    {
+      "name": "dooring",
+      "description": "Opening car door into cyclist's path causes collision with minimal reaction time",
+      "conditions": {
+        "requires_door_opening": true,
+        "requires_cyclist": true
+      },
+      "keywords": ["dooring", "car door", "cyclist", "bike lane"],
+      "valid_examples": ["parked car", "opening door"],
+      "invalid_examples": ["moving car", "pedestrian"],
+      "physical_law": "Cyclist reaction time at 20 km/h is <1 second"
+    },
+    {
+      "name": "cargo_shift_destabilization",
+      "description": "Improperly secured cargo shifts during maneuvers, altering the vehicle's center of gravity and causing loss of control or rollover.",
+      "conditions": {
+        "requires_movement": true,
+        "requires_improper_securing": true
+      },
+      "keywords": ["load shift", "shifting cargo", "unsecured load", "center of gravity", "top-heavy"],
+      "valid_examples": ["sharp turn", "sudden braking", "loose pallets", "steel coils"],
+      "invalid_examples": ["empty trailer", "properly lashed"],
+      "physical_law": "Conservation of momentum; Torque = Force x Distance from pivot"
+    },
+    {
+      "name": "driver_fatigue_reaction_delay",
+      "description": "Prolonged driving hours lead to microsleep or delayed cognitive processing, increasing reaction time for urban hazards.",
+      "conditions": {
+        "driving_hours_max": 11,
+        "requires_human_driver": true
+      },
+      "keywords": ["fatigue", "drowsy", "microsleep", "reaction time", "attention lapse"],
+      "valid_examples": ["night shift", "long haul", "12-hour shift"],
+      "invalid_examples": ["fully rested", "autonomous mode"],
+      "physical_law": "Human reaction time increases linearly with sleep deprivation hours"
+    },
+    {
+      "name": "blind_spot_encroachment",
+      "description": "Large logistics vehicles have significant 'no-zones' where smaller road users (cyclists/pedestrians) are invisible to the driver.",
+      "conditions": {
+        "requires_large_vehicle": true,
+        "requires_proximity": true
+      },
+      "keywords": ["blind spot", "no-zone", "visibility", "mirror gap", "turning radius"],
+      "valid_examples": ["right turn", "merging", "cyclist in blind spot"],
+      "invalid_examples": ["forward vision", "camera-assisted"],
+      "physical_law": "Angle of incidence vs field of view limits"
+    },
+    {
+      "name": "infrastructure_overload_strike",
+      "description": "Logistics vehicles exceeding height or weight limits cause structural damage to urban infrastructure like bridges or tunnels.",
+      "conditions": {
+        "requires_height_excess": true,
+        "requires_weight_excess": true
+      },
+      "keywords": ["low bridge", "height clearance", "overweight", "bridge strike", "tunnel ceiling"],
+      "valid_examples": ["4.2m clearance", "over-height truck", "weight limit"],
+      "invalid_examples": ["standard car", "open highway"],
+      "physical_law": "Normal force exceeds material yield strength upon impact"
+    },
+    {
+      "name": "double_parking_congestion_trigger",
+      "description": "Delivery vehicles parking in active lanes force traffic into unexpected maneuvers, creating 'near-miss' scenarios or rear-end collisions.",
+      "conditions": {
+        "requires_lane_blockage": true,
+        "requires_high_traffic": true
+      },
+      "keywords": ["double parked", "unloading", "lane blockage", "traffic flow", "bottleneck"],
+      "valid_examples": ["delivery stop", "narrow street", "blocking bike lane"],
+      "invalid_examples": ["dedicated loading bay", "empty road"],
+      "physical_law": "Fluid dynamics of traffic flow: capacity drops as lanes decrease"
+    },
+    {
+      "name": "thermal_expansion_buckling",
+      "description": "High ambient temperatures cause road surface materials (especially rail or older asphalt) to expand and buckle, creating sudden vertical hazards.",
+      "conditions": {
+        "temperature_min": 38,
+        "requires_direct_sunlight": true
+      },
+      "keywords": ["buckling", "heat warp", "road heave", "thermal expansion", "pavement blowout"],
+      "valid_examples": ["40°C", "heatwave", "expanded joints"],
+      "invalid_examples": ["night time", "winter", "cool breeze"],
+      "physical_law": "Linear thermal expansion: ΔL = αL₀ΔT"
+    },
+    {
+      "name": "crowd_turbulence_bottleneck",
+      "description": "During public events, high-density crowds behave like a fluid; sudden movements create 'shockwaves' that push pedestrians into the path of logistics vehicles.",
+      "conditions": {
+        "requires_event": true,
+        "density_threshold": "4 people/m²"
+      },
+      "keywords": ["crowd crush", "surge", "pedestrian density", "shockwave", "stampede"],
+      "valid_examples": ["concert exit", "stadium crowd", "festival"],
+      "invalid_examples": ["empty sidewalk", "normal foot traffic"],
+      "physical_law": "Lighthill-Whitham-Richards (LWR) model for flow density"
+    },
+    {
+      "name": "unmarked_construction_excavation",
+      "description": "Road maintenance involving open trenches or milled surfaces without proper transition wedges causes suspension failure or tire snagging.",
+      "conditions": {
+        "requires_maintenance": true,
+        "vertical_drop_min": 5
+      },
+      "keywords": ["milled surface", "exposed trench", "cut asphalt", "construction zone", "uneven lanes"],
+      "valid_examples": ["roadworks", "resurfacing", "utility repair"],
+      "invalid_examples": ["freshly paved", "finished road"],
+      "physical_law": "Impact force = (mass × velocity²) / stopping distance"
+    },
+    {
+      "name": "sun_glare_disability",
+      "description": "Low-angle sun (dawn/dusk) creates intense specular reflection off wet roads or glass buildings, causing temporary functional blindness.",
+      "conditions": {
+        "requires_low_sun_angle": true,
+        "time_window": ["06:00-08:00", "17:00-19:00"]
+      },
+      "keywords": ["sun glare", "blinded by light", "low sun", "specular reflection", "visor"],
+      "valid_examples": ["sunrise", "sunset", "westbound at dusk"],
+      "invalid_examples": ["overcast", "midnight", "noon"],
+      "physical_law": "Lambert’s Cosine Law for luminous intensity"
+    },
+    {
+      "name": "loose_chippings_traction_loss",
+      "description": "New 'surface dressing' maintenance leaves loose gravel; high speeds cause these chippings to act like ball bearings, reducing friction.",
+      "conditions": {
+        "requires_recent_maintenance": true,
+        "speed_threshold_min": 40
+      },
+      "keywords": ["loose chippings", "gravel", "skid on stones", "surface dressing", "windscreen chip"],
+      "valid_examples": ["newly graveled", "temporary speed limit"],
+      "invalid_examples": ["swept road", "worn asphalt"],
+      "physical_law": "Rolling resistance of granular media"
+    },
+    {
+      "name": "bridge_strike_geometry",
+      "description": "Logistics vehicles exceeding height clearances suffer structural failure upon impact with overhead infrastructure.",
+      "conditions": {
+        "requires_height_excess": true
+      },
+      "keywords": ["low bridge", "clearance", "height limit", "overheight", "struck bridge"],
+      "valid_examples": ["4.2m bridge", "double-decker trailer", "14-foot clearance"],
+      "invalid_examples": ["standard sedan", "open sky"],
+      "physical_law": "Inelastic collision: Rigid body geometry exceeds spatial constraints"
+    },
+    {
+      "name": "liquid_cargo_slosh",
+      "description": "Half-full liquid tankers experience dynamic center-of-gravity shifts during cornering, leading to unpredictable lateral forces.",
+      "conditions": {
+        "requires_liquid_cargo": true,
+        "partial_fill": true
+      },
+      "keywords": ["slosh", "liquid surge", "tanker rollover", "baffle failure", "dynamic load"],
+      "valid_examples": ["half-full tanker", "milk truck", "water carrier"],
+      "invalid_examples": ["solid cargo", "empty tanker", "full tanker"],
+      "physical_law": "Fluid dynamics: Free surface effect shifting the center of gravity"
+    },
+    {
+      "name": "milled_surface_tramlining",
+      "description": "Road maintenance involving longitudinal grooves (milling) forces tires to follow the groove path, causing 'tramlining' and loss of steering control.",
+      "conditions": {
+        "requires_maintenance": true
+      },
+      "keywords": ["milled road", "grooved pavement", "roadworks", "steering pull", "tramlining"],
+      "valid_examples": ["resurfacing zone", "exposed grooves", "construction site"],
+      "invalid_examples": ["fresh asphalt", "smooth pavement"],
+      "physical_law": "Lateral force generation via tire-tread and groove interlocking"
+    },
+    {
+      "name": "thermal_expansion_buckling",
+      "description": "Extreme heat causes road materials to expand beyond joint capacity, resulting in vertical heaving or 'blowouts'.",
+      "conditions": {
+        "temperature_min": 38
+      },
+      "keywords": ["buckling", "heat heave", "pavement blowout", "thermal expansion"],
+      "valid_examples": ["40°C", "heatwave", "summer afternoon"],
+      "invalid_examples": ["winter", "night time", "cool weather"],
+      "physical_law": "Linear thermal expansion: ΔL = αL₀ΔT"
+    },
+    {
+      "name": "crowd_shockwave_turbulence",
+      "description": "High pedestrian density at events creates shockwaves where movement at the front causes a delayed, amplified 'surge' at the back.",
+      "conditions": {
+        "requires_event": true
+      },
+      "keywords": ["crowd surge", "shockwave", "pedestrian density", "bottleneck"],
+      "valid_examples": ["stadium exit", "festival crowd", "parade"],
+      "invalid_examples": ["empty street", "low density"],
+      "physical_law": "Fluid-like flow models (LWR) for high-density crowds"
+    },
+    {
+      "name": "sun_glare_disability",
+      "description": "Specular reflection from low-angle sun (dawn/dusk) off wet roads or glass buildings causes temporary functional blindness.",
+      "conditions": {
+        "low_sun_angle": true
+      },
+      "keywords": ["sun glare", "blinded", "low sun", "specular reflection", "sunset"],
+      "valid_examples": ["sunrise", "sunset", "westbound at 6PM"],
+      "invalid_examples": ["noon", "overcast", "midnight"],
+      "physical_law": "Lambert’s Cosine Law for luminous intensity and disability glare"
+    },
+    {
+      "name": "viscous_aquaplaning_thin_film",
+      "description": "A very thin film of water mixed with road oil creates a viscous layer that reduces friction even at low speeds.",
+      "conditions": {
+        "requires_moisture": true,
+        "first_rain": true
+      },
+      "keywords": ["slick surface", "oil film", "first rain", "greasy road"],
+      "valid_examples": ["light drizzle after dry spell", "oil patches"],
+      "invalid_examples": ["heavy wash", "dry road"],
+      "physical_law": "Boundary lubrication theory: Friction = f(viscosity, speed, pressure)"
+    }
+  ]
+}
