@@ -289,7 +289,7 @@
       },
       "keywords": ["slick surface", "oil film", "first rain", "greasy road"],
       "valid_examples": ["light drizzle after dry spell", "oil patches"],
-      "invalid_examples": ["heavy wash", "dry road"],
+      "invalid_exampleresult s": ["heavy wash", "dry road"],
       "physical_law": "Boundary lubrication theory: Friction = f(viscosity, speed, pressure)"
     },
     {
