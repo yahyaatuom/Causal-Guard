@@ -291,6 +291,245 @@
       "valid_examples": ["light drizzle after dry spell", "oil patches"],
       "invalid_examples": ["heavy wash", "dry road"],
       "physical_law": "Boundary lubrication theory: Friction = f(viscosity, speed, pressure)"
+    },
+    {
+      "name": "jackknife_instability",
+      "description": "An articulated vehicle folds because the drive wheels lock or lose traction, causing the trailer to push the cab out of alignment.",
+      "conditions": {
+        "requires_articulated_vehicle": true,
+        "requires_low_friction": true
+      },
+      "keywords": ["jackknife", "articulated", "folding", "trailer swing", "locked wheels"],
+      "valid_examples": ["hard braking on ice", "empty trailer on wet road"],
+      "invalid_examples": ["straight truck", "gradual braking"],
+      "physical_law": "Vector instability: Momentum of trailer > Frictional force of tractor rear axle"
+    },
+    {
+      "name": "venturi_effect_tunnel_gust",
+      "description": "Air speed increases as it is forced through narrow urban gaps or tunnels, creating sudden lateral forces on vehicles exiting the structure.",
+      "conditions": {
+        "requires_narrow_gap": true,
+        "high_ambient_wind": true
+      },
+      "keywords": ["venturi effect", "wind tunnel", "tunnel exit", "urban canyon", "lateral gust"],
+      "valid_examples": ["exiting tunnel", "driving between skyscrapers"],
+      "invalid_examples": ["open plain", "low wind"],
+      "physical_law": "Bernoulli's Principle: Fluid velocity increases as cross-sectional area decreases"
+    },
+    {
+      "name": "ice_bridge_sublimation",
+      "description": "Bridges freeze before the surrounding roadway because they lack the thermal mass of the earth and are exposed to air on both sides.",
+      "conditions": {
+        "temperature_near_freezing": true,
+        "requires_bridge": true
+      },
+      "keywords": ["bridge freezes first", "overpass ice", "thermal isolation", "black ice"],
+      "valid_examples": ["elevated highway", "river crossing at 1°C"],
+      "invalid_examples": ["ground-level road", "5°C"],
+      "physical_law": "Newton's Law of Cooling: Increased surface area exposure leads to faster heat loss"
+    },
+    {
+      "name": "coning_and_cratering_pothole",
+      "description": "Freeze-thaw cycles cause pavement to expand and crack; vehicle weight then collapses the void, creating a sudden vertical hazard.",
+      "conditions": {
+        "requires_freeze_thaw_cycle": true
+      },
+      "keywords": ["pothole", "pavement failure", "freeze-thaw", "cratering", "rim damage"],
+      "valid_examples": ["early spring road", "puddled road surface"],
+      "invalid_examples": ["brand new asphalt", "desert climate"],
+      "physical_law": "Volumetric expansion of water (approx. 9%) upon freezing"
+    },
+    {
+      "name": "leaf_mulch_lubrication",
+      "description": "Wet leaves on the road compress into a waxy, low-friction organic film, creating conditions similar to ice.",
+      "conditions": {
+        "requires_wet_leaves": true,
+        "season": "autumn"
+      },
+      "keywords": ["wet leaves", "leaf mulch", "organic slick", "autumn hazards"],
+      "valid_examples": ["tree-lined street", "damp autumn morning"],
+      "invalid_examples": ["dry leaves", "pine forest"],
+      "physical_law": "Boundary lubrication: Pectin and water create a viscous slip layer"
+    },
+    {
+      "name": "hydrodynamic_spray_obscuration",
+      "description": "Large tires aerosolize water on the road, creating a 'rooster tail' spray that reduces visibility for following and passing vehicles.",
+      "conditions": {
+        "requires_wet_road": true,
+        "requires_high_speed": true
+      },
+      "keywords": ["road spray", "mist", "rooster tail", "blind overtaking", "splash"],
+      "valid_examples": ["passing a semi in rain", "motorway cruising at 100km/h"],
+      "invalid_examples": ["dry road", "slow traffic"],
+      "physical_law": "Centrifugal ejection and atomization of fluid by rotating treads"
+    },
+    {
+      "name": "pork_chop_maneuver_swing",
+      "description": "Long vehicles must swing wide left to make a tight right turn, creating a temporary gap that lures cyclists into a 'crush zone'.",
+      "conditions": {
+        "requires_long_wheelbase": true,
+        "requires_tight_turn": true
+      },
+      "keywords": ["wide turn", "swing out", "right hook", "blind side squeeze"],
+      "valid_examples": ["articulated truck turning right", "city bus turn"],
+      "invalid_examples": ["passenger car turn", "straight road"],
+      "physical_law": "Off-tracking: Rear wheels follow a shorter path than front wheels"
+    },
+    {
+      "name": "whiteout_glare",
+      "description": "Diffuse light in heavy snow eliminates shadows and horizons, causing loss of spatial orientation and depth perception.",
+      "conditions": {
+        "requires_snowfall": true,
+        "requires_overcast_sky": true
+      },
+      "keywords": ["whiteout", "snow glare", "flat light", "disorientation"],
+      "valid_examples": ["blizzard", "heavy lake-effect snow"],
+      "invalid_examples": ["night snow", "light flurries"],
+      "physical_law": "Multiple Mie scattering of light by ice crystals"
+    },
+    {
+      "name": "vapor_lock_fuel_starvation",
+      "description": "Fuel in lines turns to gas due to engine heat and high ambient temperature, causing the engine to stall unexpectedly.",
+      "conditions": {
+        "temperature_min": 35,
+        "requires_internal_combustion": true
+      },
+      "keywords": ["vapor lock", "engine stall", "fuel boiling", "heat soak"],
+      "valid_examples": ["stop-and-go traffic in heatwave", "mountain climb"],
+      "invalid_examples": ["electric vehicle", "cool weather"],
+      "physical_law": "Phase change: Liquid fuel reaches boiling point at ambient pressure"
+    },
+    {
+      "name": "resonance_frequency_wobble",
+      "description": "Regular road ripples (washboarding) match the vehicle's suspension natural frequency, leading to uncontrolled bouncing and loss of contact.",
+      "conditions": {
+        "requires_unpaved_road": true,
+        "speed_threshold_match": true
+      },
+      "keywords": ["washboarding", "corrugation", "resonance", "suspension bounce"],
+      "valid_examples": ["gravel road", "dirt track at 50km/h"],
+      "invalid_examples": ["smooth asphalt", "walking speed"],
+      "physical_law": "Forced oscillation: Driving frequency = Natural frequency ($f_0$)"
+    },
+    {
+      "name": "mirage_depth_distortion",
+      "description": "Hot air near the road surface refracts light, creating 'puddles' that obscure hazards or cause drivers to brake unnecessarily.",
+      "conditions": {
+        "temperature_min": 32,
+        "requires_flat_road": true
+      },
+      "keywords": ["inferior mirage", "heat shimmer", "optical illusion", "road puddle"],
+      "valid_examples": ["desert highway", "long straight asphalt in summer"],
+      "invalid_examples": ["hilly terrain", "winter"],
+      "physical_law": "Snell's Law: Refraction through air density gradients"
+    },
+    {
+      "name": "brake_line_moisture_freeze",
+      "description": "Accumulated condensation in pneumatic brake lines freezes, preventing brake release or application in heavy logistics vehicles.",
+      "conditions": {
+        "temperature_max": -5,
+        "requires_air_brakes": true
+      },
+      "keywords": ["frozen air lines", "brake lockup", "pneumatic failure", "air dryer failure"],
+      "valid_examples": ["truck parked overnight in sub-zero", "cold snap"],
+      "invalid_examples": ["hydraulic brakes", "warm climate"],
+      "physical_law": "Freezing point of water; Boyle's Law (condensation under pressure)"
+    },
+    {
+      "name": "pavement_bleeding_slick",
+      "description": "In extreme heat, asphalt binder melts and rises to the surface, creating a 'tacky' then 'slick' layer with very low friction.",
+      "conditions": {
+        "temperature_min": 40,
+        "requires_direct_sunlight": true
+      },
+      "keywords": ["bleeding asphalt", "bitumen flush", "sweating road", "sticky road"],
+      "valid_examples": ["fresh sealcoat in summer", "extreme heatwave"],
+      "invalid_examples": ["concrete road", "shaded road"],
+      "physical_law": "Viscosity reduction of bitumen as a function of temperature"
+    },
+    {
+      "name": "wildlife_collision_braking_chain",
+      "description": "Sudden appearance of animals causes high-G braking maneuvers, leading to rear-end collisions in high-speed corridors.",
+      "conditions": {
+        "requires_wildlife_corridor": true,
+        "time_window": ["18:00-06:00"]
+      },
+      "keywords": ["deer crossing", "animal strike", "panic braking", "swerve"],
+      "valid_examples": ["rural highway at dusk", "forested road"],
+      "invalid_examples": ["city center", "fenced motorway"],
+      "physical_law": "Kinetic energy dissipation during emergency braking"
+    },
+    {
+      "name": "bridge_expansion_joint_gap",
+      "description": "Cold weather causes bridge sections to contract, widening expansion joints and creating 'tire-trap' gaps for cyclists or small wheels.",
+      "conditions": {
+        "temperature_max": -10,
+        "requires_bridge": true
+      },
+      "keywords": ["expansion joint", "bridge gap", "tire trap", "structural contraction"],
+      "valid_examples": ["steel bridge in winter", "viaduct joints"],
+      "invalid_examples": ["monolithic pavement", "summer"],
+      "physical_law": "Thermal contraction: $\\Delta L = \\alpha L_0 \\Delta T$ (negative $\\Delta T$)"
+    },
+    {
+      "name": "gravel_windrow_instability",
+      "description": "Grading of unpaved roads leaves a 'windrow' of loose material in the center; crossing this causes sudden asymmetric drag and swerving.",
+      "conditions": {
+        "requires_unpaved_road": true,
+        "requires_recent_grading": true
+      },
+      "keywords": ["windrow", "gravel ridge", "loose berm", "steering pull"],
+      "valid_examples": ["passing on a dirt road", "entering a construction site"],
+      "invalid_examples": ["paved road", "compacted gravel"],
+     "physical_law": "Displacement resistance: Drag force $\\propto$ depth of loose medium"
+    },
+    {
+      "name": "tire_bead_unseating",
+      "description": "Low tire pressure combined with high lateral G-forces (sharp turns) causes the tire to peel off the rim, resulting in instant loss of control.",
+      "conditions": {
+        "requires_underinflation": true,
+        "requires_sharp_turn": true
+      },
+      "keywords": ["de-beading", "rim slip", "tire roll-off", "blowout"],
+      "valid_examples": ["emergency swerve", "heavy load on soft tires"],
+      "invalid_examples": ["straight line driving", "correctly inflated tires"],
+      "physical_law": "Internal pressure < Lateral force component at the bead seat"
+    },
+    {
+      "name": "shadow_ice_persistence",
+      "description": "In hilly or forested areas, ice remains in shaded sections of the road long after the rest of the road has thawed.",
+      "conditions": {
+        "requires_terrain_shadow": true,
+        "rising_ambient_temperature": true
+      },
+      "keywords": ["shadow ice", "hidden patch", "microclimate", "thaw-lag"],
+      "valid_examples": ["mountain curve in shade", "forest tunnel"],
+      "invalid_examples": ["open field", "constant sub-zero"],
+      "physical_law": "Radiative heat transfer: Lack of shortwave solar radiation prevents melting"
+    },
+    {
+      "name": "dust_devil_buffeting",
+      "description": "Small, intense vortices in dry conditions create sudden, localized pressure drops and erratic wind gusts.",
+      "conditions": {
+        "requires_dry_soil": true,
+        "requires_intense_heating": true
+      },
+      "keywords": ["dust devil", "whirlwind", "sudden gust", "visibility drop"],
+      "valid_examples": ["desert road at noon", "unpaved lot"],
+      "invalid_examples": ["rainy day", "stable air"],
+      "physical_law": "Convective instability: Rapid vertical air movement with rotation"
+    },
+    {
+      "name": "hydroplaning_rebound_collision",
+      "description": "After a vehicle regains traction post-hydroplane, the tires are often steered at an angle, causing the vehicle to dart suddenly into an adjacent lane.",
+      "conditions": {
+        "requires_traction_recovery": true,
+        "requires_steering_input": true
+      },
+      "keywords": ["traction snap", "rebound", "over-correction", "hook-and-ladder"],
+      "valid_examples": ["steering during a skid", "exiting a deep puddle"],
+      "invalid_examples": ["keeping wheels straight during hydroplaning"],
+      "physical_law": "Static friction > Kinetic friction; sudden lateral force application"
     }
   ]
 }
