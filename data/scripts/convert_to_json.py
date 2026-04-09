@@ -2,6 +2,7 @@
 import pandas as pd
 import json
 import os
+import re
 from datetime import datetime
 
 def parse_list_field(value):
@@ -39,23 +40,11 @@ def parse_perturbations(row):
     
     return perturbations
 
-def extract_timeline(description):
-    """Extract timeline events from description (simplified)"""
-    # This is a simplified version - you may want to enhance this
-    timeline = []
-    
-    # Look for time patterns in description
-    import re
-    time_pattern = r'(\d{1,2}):(\d{2})\s*(AM|PM)?'
-    
-    # For now, return empty list - you can enhance this later
-    return timeline
-
 def convert_excel_to_json(excel_path, output_path):
     """Convert Excel scenarios to JSON format"""
     
     print(f"Reading Excel file: {excel_path}")
-    df = pd.read_excel(excel_path, sheet_name='Scenario')
+    df = pd.read_excel(excel_path, sheet_name=0, header=0)
     
     scenarios = []
     
@@ -65,9 +54,22 @@ def convert_excel_to_json(excel_path, output_path):
             continue
             
         scenario_id = str(row['Scenario_ID']).strip()
+        
+        # Skip header row or invalid IDs
+        if scenario_id == 'Scenario_ID' or scenario_id.startswith('Scenario_'):
+            print(f"Skipping invalid row: {scenario_id}")
+            continue
+            
         print(f"Processing: {scenario_id}")
         
-        # Parse minimal sufficient set (it's in {format} with commas)
+        # Parse complexity level safely
+        complexity_val = row.get('Complexity_Level', 2)
+        try:
+            complexity_level = int(complexity_val) if not pd.isna(complexity_val) else 2
+        except (ValueError, TypeError):
+            complexity_level = 2
+        
+        # Parse minimal sufficient set
         minimal_set = parse_list_field(row.get('Minimal_Sufficient_Set', ''))
         
         # Parse contributing factors
@@ -76,27 +78,29 @@ def convert_excel_to_json(excel_path, output_path):
         # Parse non-causal correlates
         non_causal = parse_list_field(row.get('Non_Causal_Correlates', ''))
         
-        # Get temperature if available (for environment)
+        # Get temperature if available
         temp = None
         desc = str(row.get('Incident_Description', ''))
-        import re
         temp_match = re.search(r'(\d+)[°\s]?C', desc)
         if temp_match:
-            temp = int(temp_match.group(1))
+            try:
+                temp = int(temp_match.group(1))
+            except ValueError:
+                temp = None
         
         # Build scenario object
         scenario = {
             "id": scenario_id,
             "category": str(row.get('Incident_Category', '')).strip(),
-            "complexity_level": int(row.get('Complexity_Level', 2)) if not pd.isna(row.get('Complexity_Level')) else 2,
+            "complexity_level": complexity_level,
             "description": str(row.get('Incident_Description', '')).strip(),
             "context": {
-                "timeline": [],  # You can enhance this later
+                "timeline": [],
                 "locations": [
                     {
                         "name": str(row.get('Location', '')).strip(),
                         "type": "unknown",
-                        "coordinates": []  # Add coordinates if you have them
+                        "coordinates": []
                     }
                 ],
                 "road_network": {
@@ -154,8 +158,8 @@ def convert_excel_to_json(excel_path, output_path):
 
 if __name__ == "__main__":
     # Set your paths here
-    excel_path = "data/raw/Causal_Admissibility_Evaluation.xlsx"
-    output_path = "data/json/scenarios.json"
+    excel_path = r"C:\Users\Dell\Desktop\paper 2 of 3\scenarios_perturbed.xlsx"
+    output_path = r"data/json/scenarios.json"
     
     # Create output directory if it doesn't exist
     os.makedirs(os.path.dirname(output_path), exist_ok=True)

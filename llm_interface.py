@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class GroqLLM:
-    def __init__(self, model="meta-llama/llama-4-scout-17b-16e-instruct"):
+    def __init__(self, model="llama-3.3-70b-versatile"):
         api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
             print("⚠️ Error: GROQ_API_KEY not found. Check your .env file.")
