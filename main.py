@@ -76,9 +76,10 @@ def save_to_db(scenario, llm_result, checks):
         print(f"⚠️  Database Sync Warning: {e} (Result not saved to SQL)")
 
 # --- 2. LOAD DATA ---
-with open('data/json/scenarios.json', 'r', encoding='utf-8') as f:
+json_path = os.path.join(os.path.dirname(__file__), 'data', 'json', 'scenarios.json')
+with open(json_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
-
+print(f"✅ Loaded {len(data['scenarios'])} scenarios")
 scenarios = data['scenarios']
 print(f"✅ Loaded {len(scenarios)} scenarios\n")
 
