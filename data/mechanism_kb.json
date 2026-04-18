@@ -530,6 +530,78 @@
       "valid_examples": ["steering during a skid", "exiting a deep puddle"],
       "invalid_examples": ["keeping wheels straight during hydroplaning"],
       "physical_law": "Static friction > Kinetic friction; sudden lateral force application"
-    }
+    },
+    {
+  "name": "visual_distraction_mobile_phone",
+  "description": "Driver looking at mobile phone diverts visual attention from roadway, increasing reaction time by 2-3 seconds",
+  "conditions": {
+    "requires_visual_distraction": true,
+    "increases_reaction_time": true
+  },
+  "keywords": ["phone", "mobile", "texting", "looking at phone", "smartphone", "cell phone", "distracted driving"],
+  "valid_examples": ["looking at phone", "texting while driving", "reading a message", "browsing phone"],
+  "invalid_examples": ["hands-free call", "using voice assistant", "glancing at GPS"],
+  "physical_law": "Visual reaction time increases from ~0.75s to ~2.5s when eyes off road"
+},
+{
+  "name": "cognitive_distraction_conversation",
+  "description": "Engaging in conversation (passenger, hands-free call) diverts cognitive resources, reducing hazard detection",
+  "conditions": {
+    "requires_cognitive_load": true,
+    "reduces_situational_awareness": true
+  },
+  "keywords": ["conversation", "talking", "passenger", "arguing", "discussing", "hands-free call"],
+  "valid_examples": ["talking to passenger", "on a phone call", "arguing with passenger"],
+  "invalid_examples": ["singing alone", "listening to music", "radio playing"],
+  "physical_law": "Cognitive distraction causes 'inattentional blindness' — missing up to 50% of peripheral hazards"
+},
+{
+  "name": "manual_distraction_reaching",
+  "description": "Driver reaching for object (phone, food, navigation) removes hands from steering wheel, reducing control",
+  "conditions": {
+    "requires_manual_distraction": true,
+    "reduces_vehicle_control": true
+  },
+  "keywords": ["reaching for", "grabbing", "picking up", "dropped", "adjusting", "reaching"],
+  "valid_examples": ["reaching for phone", "adjusting GPS", "picking up dropped item", "reaching for coffee"],
+  "invalid_examples": ["using steering wheel controls", "voice command"],
+  "physical_law": "One hand off steering wheel reduces corrective steering capacity by 50-70%"
+},
+{
+  "name": "visual_distraction_GPS",
+  "description": "Driver looking at GPS screen diverts eyes from roadway, typical glance duration 1.5-2 seconds",
+  "conditions": {
+    "requires_visual_distraction": true,
+    "typical_glance_duration_sec": 2.0
+  },
+  "keywords": ["GPS", "navigation", "map", "screen", "display", "infotainment", "dashboard screen"],
+  "valid_examples": ["looking at GPS", "programming navigation", "reading map", "touching screen"],
+  "invalid_examples": ["audible GPS directions", "heads-up display"],
+  "physical_law": "At 100 km/h, 2 seconds of eyes-off-road = 55 meters traveled blind"
+},
+{
+  "name": "visual_distraction_external",
+  "description": "Driver looking at external distraction (accident, billboard, pedestrian) diverts attention from driving task",
+  "conditions": {
+    "requires_visual_distraction": true,
+    "is_external": true
+  },
+  "keywords": ["rubbernecking", "looking at accident", "staring at", "distracted by", "watching", "billboard"],
+  "valid_examples": ["looking at accident scene", "staring at billboard", "watching pedestrian", "rubbernecking"],
+  "invalid_examples": ["checking mirrors", "scanning intersection"],
+  "physical_law": "Rubbernecking reduces effective scanning and increases rear-end collision risk by 40%"
+},
+{
+  "name": "distraction_combined",
+  "description": "Multiple simultaneous distractions (e.g., phone + conversation) compound reaction time deficits",
+  "conditions": {
+    "requires_multiple_distractions": true,
+    "compounding_effect": true
+  },
+  "keywords": ["both", "while also", "simultaneously", "at the same time", "combined distraction"],
+  "valid_examples": ["texting while talking", "reaching for phone while navigating", "eating while on call"],
+  "invalid_examples": ["single distraction only"],
+  "physical_law": "Combined distractions can increase reaction time by 3-5x compared to baseline"
+}
   ]
 }
