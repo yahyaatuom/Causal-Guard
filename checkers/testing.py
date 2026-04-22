@@ -5,6 +5,11 @@ import os
 sys.path.append(r"C:\Users\Dell\Desktop\Causal-Guard\checkers")
 
 from c1_temporal import C1TemporalChecker
+from error_handling import ScenarioLoader
+
+paths = [r"C:\Users\Dell\Desktop\Causal-Guard\data\json\scenarios.json"]
+loader = ScenarioLoader(paths)
+scenarios_list = loader.load()
 
 def run_test():
     with open(r"C:\Users\Dell\Desktop\Causal-Guard\data\json\scenarios.json", 'r', encoding='utf-8') as f:
