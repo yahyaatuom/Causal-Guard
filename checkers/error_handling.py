@@ -46,3 +46,9 @@ class ScenarioLoader:
         print(f"Successfully loaded {len(valid_scenarios)}/{len(all_scenarios)} scenarios.")
         return valid_scenarios
 
+candidate_paths = [
+r"C:\Users\Dell\Desktop\Causal-Guard\data\json\scenarios.json",
+]
+
+loader = ScenarioLoader(candidate_paths)
+scenarios = loader.load()
