@@ -1,0 +1,80 @@
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                     CAUSAL-GUARD DATABASE                                    │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│    scenarios     │     │  llm_responses   │     │validation_results│
+├──────────────────┤     ├──────────────────┤     ├──────────────────┤
+│ id (PK)          │◄────│ scenario_id (FK) │     │ id (PK)          │
+│ category         │     │ request_id (UK)  │◄────│ request_id (FK)  │
+│ complexity_level │     │ model_name       │     │ status           │
+│ description      │     │ prompt           │     │ overall_latency  │
+│ source_type      │     │ explanation      │     │ c1_passed        │
+│ source_reference │     │ latency_ms       │     │ c1_reason        │
+│ created_at       │     │ tokens_prompt    │     │ c2_passed        │
+│ updated_at       │     │ tokens_completion│     │ c2_reason        │
+└──────────────────┘     │ temperature      │     │ c3_passed        │
+         │                │ created_at       │     │ c3_reason        │
+         │                └──────────────────┘     │ c3_similarity    │
+         │                         │               │ c4_passed        │
+         │                         │               │ c4_reason        │
+         ▼                         ▼               │ c5_passed        │
+┌──────────────────┐     ┌──────────────────┐     │ c5_reason        │
+│ scenario_contexts│     │   perturbations  │     │ c5_coverage      │
+├──────────────────┤     ├──────────────────┤     │ violations (JSONB)│
+│ scenario_id (PK) │     │ id (PK)          │     │ full_results(JSONB)│
+│ road_geometry    │     │ scenario_id (FK) │     │ created_at       │
+│ weather          │     │ perturbation_num │     └──────────────────┘
+│ temperature      │     │ description      │              │
+│ road_condition   │     │ expected_violation│              │
+│ lighting         │     └──────────────────┘              │
+│ context_json     │                                        │
+└──────────────────┘                                        │
+         │                                                  │
+         ▼                                                  ▼
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│  timeline_events │     │    locations     │     │   audit_log      │
+├──────────────────┤     ├──────────────────┤     ├──────────────────┤
+│ id (PK)          │     │ id (PK)          │     │ id (PK)          │
+│ scenario_id (FK) │     │ scenario_id (FK) │     │ request_id (FK)  │
+│ event_name       │     │ name             │     │ action           │
+│ event_time       │     │ location_type    │     │ user_id          │
+│ event_value      │     │ latitude         │     │ changes (JSONB)  │
+│ event_order      │     │ longitude        │     │ ip_address       │
+│ created_at       │     │ coordinates (GEO)│     │ user_agent       │
+└──────────────────┘     └──────────────────┘     │ created_at       │
+                                                   └──────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                     KNOWLEDGE BASE TABLES                                    │
+├───────────────────────────────┐  ┌───────────────────────────────┐  ┌───────────────────────┤
+│     mechanism_knowledge_base  │  │     spurious_patterns          │  │ completeness_templates │
+├───────────────────────────────┤  ├───────────────────────────────┤  ├───────────────────────┤
+│ id (PK)                       │  │ id (PK)                       │  │ id (PK)               │
+│ name (UK)                     │  │ pattern_name (UK)             │  │ category (UK)         │
+│ description                   │  │ regex_pattern                 │  │ required_factors(JSONB)│
+│ embedding (vector)            │  │ pattern_type                  │  │ examples (JSONB)      │
+│ conditions (JSONB)            │  │ reason_template               │  │ created_at            │
+│ valid_examples (JSONB)        │  │ pmi_threshold                 │  │ updated_at            │
+│ invalid_examples (JSONB)      │  │ is_active                     │  └───────────────────────┘
+│ source                        │  │ created_at                    │
+│ confidence                    │  │ updated_at                    │
+│ created_at                    │  └───────────────────────────────┘
+│ updated_at                    │
+└───────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                     STATISTICS & AGGREGATION                                │
+├───────────────────────────────┐  ┌───────────────────────────────────────────────────────────┤
+│         pmi_statistics        │  │              model_comparison (VIEW)                       │
+├───────────────────────────────┤  ├───────────────────────────────────────────────────────────┤
+│ id (PK)                       │  │ model_name, total_scenarios, c1_rate, c2_rate,            │
+│ cause_term                    │  │ c3_rate, c4_rate, c5_rate, avg_latency                    │
+│ effect_term                   │  └───────────────────────────────────────────────────────────┘
+│ pmi_score                     │
+│ frequency                     │  ┌───────────────────────────────────────────────────────────┐
+│ corpus                        │  │           violation_summary (VIEW)                        │
+│ created_at                    │  ├───────────────────────────────────────────────────────────┤
+└───────────────────────────────┘  │ date, model_name, total, c1_count, c2_count, c3_count,   │
+                                    │ c4_count, c5_count, avg_latency                          │
+                                    └───────────────────────────────────────────────────────────┘
