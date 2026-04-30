@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
 
-# Import Causal-Guard components
+# Import components from Causal-Guard
 from llm_interface import GroqLLM
 from checkers.c1_temporal import C1TemporalChecker
 from checkers.c2_spatial import C2SpatialChecker
