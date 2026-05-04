@@ -2,13 +2,19 @@
 import os
 import json
 import uuid
+import time
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
+
+# SlowAPI imports for rate limiting
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Import components from Causal-Guard
 from llm_interface import GroqLLM
@@ -18,7 +24,16 @@ from checkers.c3_mechanism import C3MechanismChecker
 from checkers.c4_spurious import C4SpuriousChecker
 from checkers.c5_completeness import C5CompletenessChecker
 
-# Import database (optional - remove if not using)
+# ============================================================
+# RATE LIMITING SETUP
+# ============================================================
+
+limiter = Limiter(key_func=get_remote_address)
+
+# ============================================================
+# DATABASE (Optional)
+# ============================================================
+
 try:
     import psycopg2
     from psycopg2.extras import Json
@@ -96,6 +111,9 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Add rate limit exception handler
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # Enable CORS for web UI
 app.add_middleware(
     CORSMiddleware,
@@ -130,12 +148,13 @@ def build_scenario(incident: str, scenario_id: str = None) -> dict:
         "minimal_sufficient_set": []
     }
 
-def save_to_db(request_id: str, incident: str, explanation: str, model: str, 
+
+def save_to_db(request_id: str, incident: str, explanation: str, model: str,
                results: dict, admissible: bool, latency_ms: int):
     """Save validation results to PostgreSQL (optional)"""
     if not DB_AVAILABLE:
         return
-    
+
     try:
         conn = psycopg2.connect(
             dbname=os.getenv("DB_NAME", "causal_guard"),
@@ -144,7 +163,7 @@ def save_to_db(request_id: str, incident: str, explanation: str, model: str,
             host=os.getenv("DB_HOST", "localhost")
         )
         cur = conn.cursor()
-        
+
         cur.execute("""
             INSERT INTO validation_logs 
             (request_id, incident, explanation, model, check_results, all_passed, latency_ms, created_at)
@@ -173,6 +192,7 @@ async def root():
         checkers_available=list(app.state.checkers.keys())
     )
 
+
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint"""
@@ -183,22 +203,28 @@ async def health_check():
         checkers_available=list(app.state.checkers.keys())
     )
 
+
 @app.post("/validate", response_model=ValidateResponse)
-async def validate(request: ValidateRequest, background_tasks: BackgroundTasks):
+@limiter.limit("10/minute")  # 10 requests per minute
+async def validate(request: ValidateRequest, background_tasks: BackgroundTasks, req: Request = None):
     """
     Validate an incident explanation against C₁–C₅ constraints
     
     - If `explanation` is provided: validates it directly
     - If `explanation` is not provided: generates one using the specified model
     """
-    import time
-    
     request_id = uuid.uuid4().hex[:16]
     start_time = time.time()
-    
+
+    # Input validation
+    if len(request.incident) < 10:
+        raise HTTPException(status_code=400, detail="Incident too short (min 10 chars)")
+    if len(request.incident) > 5000:
+        raise HTTPException(status_code=400, detail="Incident too long (max 5000 chars)")
+
     # Step 1: Build scenario object
     scenario = build_scenario(request.incident, request.scenario_id)
-    
+
     # Step 2: Get explanation (generate if not provided)
     if request.explanation:
         explanation = request.explanation
@@ -209,11 +235,11 @@ async def validate(request: ValidateRequest, background_tasks: BackgroundTasks):
         llm_result = app.state.llm.generate_explanation(request.incident)
         explanation = llm_result['explanation']
         model_used = request.model
-    
+
     # Step 3: Run all checkers
     results = {}
     violations = []
-    
+
     for checker_id, checker in app.state.checkers.items():
         try:
             result = checker.check(scenario, explanation)
@@ -237,19 +263,19 @@ async def validate(request: ValidateRequest, background_tasks: BackgroundTasks):
                 'constraint': checker_id,
                 'reason': f"Checker error: {str(e)}"
             })
-    
+
     # Step 4: Determine overall admissibility
     admissible = len(violations) == 0
-    
+
     # Step 5: Calculate latency
     latency_ms = int((time.time() - start_time) * 1000)
-    
+
     # Step 6: Save to database (background)
     background_tasks.add_task(
-        save_to_db, request_id, request.incident, explanation, 
+        save_to_db, request_id, request.incident, explanation,
         model_used, results, admissible, latency_ms
     )
-    
+
     # Step 7: Return response
     return ValidateResponse(
         request_id=request_id,
@@ -263,23 +289,22 @@ async def validate(request: ValidateRequest, background_tasks: BackgroundTasks):
         latency_ms=latency_ms
     )
 
+
 @app.post("/validate/batch")
-async def validate_batch(requests: List[ValidateRequest]):
+async def validate_batch(requests: List[ValidateRequest], background_tasks: BackgroundTasks):
     """
     Batch validate multiple incidents
     """
-    import asyncio
-    import time
-    
     results = []
     for req in requests:
-        result = await validate(req, BackgroundTasks())
+        result = await validate(req, background_tasks)
         results.append(result.dict())
-    
+
     return {
         "total": len(results),
         "results": results
     }
+
 
 # ============================================================
 # RUN WITH: uvicorn api:app --reload --host 0.0.0.0 --port 8000
