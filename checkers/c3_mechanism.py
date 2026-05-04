@@ -4,7 +4,7 @@ from sentence_transformers import SentenceTransformer
 import numpy as np
 
 class C3MechanismChecker:
-    def __init__(self, kb_path='data/mechanism_kb.json', shared_model=None):  # ✅ Add parameter
+    def __init__(self, kb_path='data/mechanism_kb.json', shared_model=None):
         self.name = "C₃ Mechanistic Plausibility"
         
         # Load knowledge base
@@ -12,7 +12,7 @@ class C3MechanismChecker:
             self.kb = json.load(f)['mechanisms']
         
         # Use shared model if provided, otherwise create new one
-        if shared_model is not None:  # ✅ Check for None properly
+        if shared_model is not None:
             self.model = shared_model
         else:
             self.model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -28,7 +28,7 @@ class C3MechanismChecker:
         similarities = np.dot(self.kb_embeddings, explanation_embedding.T).flatten()
         best_idx = np.argmax(similarities)
         best_similarity = similarities[best_idx]
-        best_mech = self.kb[best_idx]
+        best_mech = self.kb[best_idx]  # ← This is the correct variable name
 
         if best_similarity < self.similarity_threshold:
             return {'checker': 'C3', 'passed': False, 'reason': "Unknown mechanism."}
@@ -43,7 +43,37 @@ class C3MechanismChecker:
                 'reason': violation,
                 'details': {'matched': best_mech['name'], 'similarity': float(best_similarity)}
             }
+        
+        # 3. Domain-specific rule-based checks (using best_mech, not best_mechanism)
+        if best_mech['name'] == 'hydroplaning':
+            if 'standing water' not in explanation.lower() and 'water film' not in explanation.lower():
+                return {
+                    'checker': 'C3',
+                    'passed': False,
+                    'reason': "Hydroplaning requires standing water or water film",
+                    'details': {'matched': best_mech['name'], 'similarity': float(best_similarity)}
+                }
+    
+        if best_mech['name'] == 'black_ice_formation':
+            temp = self._extract_temp(explanation)
+            if temp is not None and temp > 0:
+                return {
+                    'checker': 'C3',
+                    'passed': False,
+                    'reason': f"Black ice impossible at {temp}°C (requires ≤0°C)",
+                    'details': {'matched': best_mech['name'], 'similarity': float(best_similarity)}
+                }
+    
+        if best_mech['name'] == 'dooring':
+            if 'cyclist' not in explanation.lower() and 'bike lane' not in explanation.lower():
+                return {
+                    'checker': 'C3',
+                    'passed': False,
+                    'reason': "Dooring requires a cyclist in the path",
+                    'details': {'matched': best_mech['name'], 'similarity': float(best_similarity)}
+                }
 
+        # 4. All checks passed
         return {
             'checker': 'C3',
             'passed': True,
@@ -53,7 +83,7 @@ class C3MechanismChecker:
 
     def _evaluate_conditions(self, mech, explanation, scenario):
         """
-        Dyanmically checks conditions defined in mechanism_kb.json
+        Dynamically checks conditions defined in mechanism_kb.json
         """
         conds = mech.get('conditions', {})
         expl_lower = explanation.lower()
