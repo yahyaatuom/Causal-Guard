@@ -83,7 +83,7 @@ Explanation:"""
                     }
                 time.sleep(2)  # Wait before retry
         
-        # Fallback (should never reach here)
+        # Fallback (should not reach here)
         return {
             'explanation': "Unexpected error occurred",
             'model': self.model,
