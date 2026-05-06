@@ -91,6 +91,6 @@ Explanation:"""
         }
     
     def set_model(self, model_name):
-        """Change the model after initialization"""
+        """Change the model right after initialization"""
         self.model = model_name
         print(f"✅ Model changed to: {self.model}")
