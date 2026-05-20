@@ -17,11 +17,9 @@ class C1TemporalChecker:
             dict with passed (bool), reason (str), details (dict)
         """
         
-        # Extract causal claims from explanation
-        claims = self._extract_causal_claims(explanation)
+        claims = self._extract_causal_claims(explanation) # Extract cause-effect claims from explanation
         
-        # Extract timeline from scenario
-        timeline = self._extract_timeline(scenario)
+        timeline = self._extract_timeline(scenario) # Extract timeline from scenario
         
         violations = []
         
