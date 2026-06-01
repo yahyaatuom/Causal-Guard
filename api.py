@@ -15,7 +15,7 @@ from contextlib import asynccontextmanager
 from llm_interface import GroqLLM
 from checkers.c1_temporal import C1TemporalChecker
 from checkers.c2_spatial import C2SpatialChecker
-# from checkers.c3_mechanism import C3MechanismChecker  # DISABLED
+from checkers.c3_mechanism import C3MechanismChecker  # DISABLED
 from checkers.c4_spurious import C4SpuriousChecker
 from checkers.c5_completeness import C5CompletenessChecker
 
