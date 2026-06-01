@@ -520,6 +520,14 @@
       "physical_law": "Convective instability: Rapid vertical air movement with rotation"
     },
     {
+  "name": "black_ice_formation",
+  "description": "Black ice forms when temperatures drop below freezing (≤0°C) on wet surfaces",
+  "conditions": {"temperature_max": 0, "requires_moisture": true},
+  "keywords": ["black ice", "ice patches", "icy road"],
+  "valid_examples": ["-2°C", "-5°C", "below freezing"],
+  "invalid_examples": ["2°C", "5°C", "6°C", "above freezing"]
+},
+    {
       "name": "hydroplaning_rebound_collision",
       "description": "After a vehicle regains traction post-hydroplane, the tires are often steered at an angle, causing the vehicle to dart suddenly into an adjacent lane.",
       "conditions": {
