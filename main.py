@@ -39,17 +39,46 @@ c5_checker = C5CompletenessChecker()
 
 def save_to_db(scenario, llm_result, checks):
     """Saves results to PostgreSQL for long-term auditing."""
-    try:
-        DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
+    
+    # Get database credentials from environment (NO HARDCODED FALLBACK)
+    DB_NAME = os.getenv("DB_NAME")
+    DB_USER = os.getenv("DB_USER")
+    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    
+    if not all([DB_NAME, DB_USER, DB_PASSWORD]):
+        print("⚠️ Warning: Database not configured. Results will not be saved.")
+        print("   Add DB_NAME, DB_USER, DB_PASSWORD to .env to enable database logging.\n")
+    else:
+        print("✅ Database configured. Results will be saved.\n")
+    
+    # Validate required credentials
+    if not all([DB_NAME, DB_USER, DB_PASSWORD]):
+        missing = []
+        if not DB_NAME:
+            missing.append("DB_NAME")
+        if not DB_USER:
+            missing.append("DB_USER")
+        if not DB_PASSWORD:
+            missing.append("DB_PASSWORD")
         
+        print(f"⚠️ Database credentials missing: {', '.join(missing)}. Skipping save.")
+        print("   To enable database logging, add these to your .env file:")
+        print("   DB_NAME=causal_guard")
+        print("   DB_USER=postgres")
+        print("   DB_PASSWORD=your_password")
+        return
+    
+    try:
         conn = psycopg2.connect(
-            dbname="causal_guard",
-            user="postgres",
+            dbname=DB_NAME,
+            user=DB_USER,
             password=DB_PASSWORD,
-            host="localhost"
+            host=DB_HOST
         )
         cur = conn.cursor()
         
+        # Create table if not exists (idempotent)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS causal_audit_logs (
                 id SERIAL PRIMARY KEY,
@@ -82,8 +111,12 @@ def save_to_db(scenario, llm_result, checks):
         cur.close()
         conn.close()
         print("   💾 Saved to database")
+        
+    except psycopg2.OperationalError as e:
+        print(f"⚠️ Database connection failed: {e}")
+        print("   Check that PostgreSQL is running and credentials are correct.")
     except Exception as e:
-        print(f"⚠️ Database Sync Warning: {e} (Result not saved to SQL)")
+        print(f"⚠️ Database error: {e}")
 
 
 # ============================================================
