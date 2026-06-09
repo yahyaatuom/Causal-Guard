@@ -3,6 +3,7 @@ import os
 import time
 import json
 import re
+import sys
 from openai import OpenAI
 from dotenv import load_dotenv
 from pathlib import Path
@@ -18,11 +19,8 @@ class GroqLLM:
         """
         Initialize Groq LLM client with structured output support
         
-        Available models on Groq (free tier):
-        - llama-3.3-70b-versatile (best quality, good speed)
-        - llama-3.1-8b-instant (fastest)
-        - mixtral-8x7b-32768 (good for complex reasoning)
-        - gemma2-9b-it (lightweight)
+        Raises:
+            ValueError: If GROQ_API_KEY is missing
         """
         self.api_key = os.getenv("GROQ_API_KEY")
         self.base_url = "https://api.groq.com/openai/v1"
@@ -30,22 +28,30 @@ class GroqLLM:
         self.temperature = 0
         self.max_retries = 2
         
-        print(f"DEBUG: API Key loaded: {'Yes' if self.api_key else 'No'}")
-        print(f"DEBUG: Using model: {self.model}")
-        
+        # CRITICAL FIX: Early exit on missing API key
         if not self.api_key:
-            print("⚠️ Error: GROQ_API_KEY not found. Check your .env file.")
-            self.client = None
-        else:
-            self.client = OpenAI(
-                base_url=self.base_url,
-                api_key=self.api_key
+            error_msg = (
+                "\n" + "="*60 + "\n"
+                "❌ FATAL ERROR: GROQ_API_KEY not found in environment\n"
+                "="*60 + "\n"
+                "Please set your Groq API key in the .env file:\n"
+                "   GROQ_API_KEY=gsk_your_api_key_here\n\n"
+                "Get your API key from: https://console.groq.com/keys\n"
+                "="*60 + "\n"
             )
+            print(error_msg)
+            raise ValueError("GROQ_API_KEY is required but not found. Check your .env file.")
+        
+        print(f"✅ API Key loaded successfully")
+        print(f"✅ Using model: {self.model}")
+        
+        self.client = OpenAI(
+            base_url=self.base_url,
+            api_key=self.api_key
+        )
     
     def _build_structured_prompt(self, scenario_description: str) -> str:
-        """
-        Build prompt that forces structured JSON output
-        """
+        """Build prompt that forces structured JSON output"""
         return f"""Analyze the following incident and provide a structured causal explanation.
 
 INCIDENT: {scenario_description}
@@ -80,9 +86,7 @@ Example response for a weather-related crash:
 Now respond with ONLY valid JSON:"""
     
     def _extract_json_from_response(self, text: str) -> Optional[Dict[str, Any]]:
-        """
-        Extract JSON from LLM response, handling various edge cases
-        """
+        """Extract JSON from LLM response, handling various edge cases"""
         # Remove markdown code blocks
         text = re.sub(r'```json\s*', '', text)
         text = re.sub(r'```\s*', '', text)
@@ -95,33 +99,19 @@ Now respond with ONLY valid JSON:"""
         json_str = json_match.group()
         
         # Try to fix common JSON issues
-        # Replace single quotes with double quotes (careful)
         try:
-            # First attempt: direct parse
             return json.loads(json_str)
         except json.JSONDecodeError:
-            # Second attempt: fix trailing commas
+            # Fix trailing commas
             json_str = re.sub(r',\s*}', '}', json_str)
             json_str = re.sub(r',\s*\]', ']', json_str)
             try:
                 return json.loads(json_str)
             except json.JSONDecodeError:
-                # Third attempt: use ast.literal_eval as fallback
-                import ast
-                try:
-                    # Convert JSON-like string to Python dict
-                    result = ast.literal_eval(json_str)
-                    if isinstance(result, dict):
-                        return result
-                except (SyntaxError, ValueError):
-                    pass
-        
-        return None
+                return None
     
     def _get_fallback_response(self, scenario_description: str, error_msg: str = "") -> Dict[str, Any]:
-        """
-        Return structured fallback when API or parsing fails
-        """
+        """Return structured fallback when API or parsing fails"""
         return {
             'structured_output': {
                 "primary_cause": f"Unable to analyze: {error_msg[:100]}",
@@ -139,12 +129,7 @@ Now respond with ONLY valid JSON:"""
         }
     
     def generate_explanation(self, scenario_description: str) -> Dict[str, Any]:
-        """
-        Send scenario to Groq and get structured explanation with retry logic
-        """
-        if not self.client:
-            return self._get_fallback_response(scenario_description, "API key not configured")
-        
+        """Send scenario to Groq and get structured explanation with retry logic"""
         prompt = self._build_structured_prompt(scenario_description)
         
         for attempt in range(self.max_retries):
@@ -163,7 +148,6 @@ Now respond with ONLY valid JSON:"""
                 structured = self._extract_json_from_response(raw_response)
                 
                 if structured and all(k in structured for k in ["primary_cause", "mechanism"]):
-                    # Valid structured output
                     return {
                         'structured_output': structured,
                         'explanation': raw_response,
@@ -177,7 +161,6 @@ Now respond with ONLY valid JSON:"""
                         'error': None
                     }
                 else:
-                    # Parsing failed but response received
                     return {
                         'structured_output': None,
                         'explanation': raw_response,
@@ -205,12 +188,10 @@ Now respond with ONLY valid JSON:"""
         print(f"✅ Model changed to: {self.model}")
     
     def get_structured_explanation(self, scenario_description: str) -> Optional[Dict[str, Any]]:
-        """
-        Convenience method to get only the structured output
-        """
+        """Convenience method to get only the structured output"""
         result = self.generate_explanation(scenario_description)
         return result.get('structured_output')
 
 
-# For backward compatibility with existing code
+# For backward compatibility
 NVIDIALLM = GroqLLM
