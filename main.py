@@ -3,6 +3,7 @@ import json
 import time
 import sys
 import os
+import uuid
 from sentence_transformers import SentenceTransformer
 from checkers.c1_temporal import C1TemporalChecker
 from checkers.c2_spatial import C2SpatialChecker
@@ -12,6 +13,7 @@ from checkers.c5_completeness import C5CompletenessChecker
 from llm_interface import GroqLLM
 import psycopg2
 from psycopg2.extras import Json
+from sklearn.model_selection import train_test_split
 
 # ============================================================
 # CONFIGURATION
@@ -26,19 +28,23 @@ except ValueError as e:
     print(f"\n❌ Failed to initialize LLM: {e}")
     print("Exiting. Please fix the API key issue and try again.\n")
     sys.exit(1)
+
 c1_checker = C1TemporalChecker()
 c2_checker = C2SpatialChecker()
 c3_checker = C3MechanismChecker(shared_model=shared_model)
 c4_checker = C4SpuriousChecker()
 c5_checker = C5CompletenessChecker()
 
+# Generate a unique run_id for this execution
+RUN_ID = str(uuid.uuid4())[:8]
+
 
 # ============================================================
-# DATABASE HELPER
+# DATABASE HELPER WITH DEDUPLICATION
 # ============================================================
 
 def save_to_db(scenario, llm_result, checks):
-    """Saves results to PostgreSQL with deduplication."""
+    """Saves results to PostgreSQL with deduplication using run_id."""
     try:
         DB_NAME = os.getenv("DB_NAME")
         DB_USER = os.getenv("DB_USER")
@@ -72,15 +78,11 @@ def save_to_db(scenario, llm_result, checks):
             )
         """)
         
-        # Generate a unique run_id for this execution
-        import uuid
-        run_id = str(uuid.uuid4())[:8]
-        
         # Check if this scenario already exists for this run
         cur.execute("""
             SELECT id FROM causal_audit_logs 
             WHERE scenario_id = %s AND run_id = %s
-        """, (scenario['id'], run_id))
+        """, (scenario['id'], RUN_ID))
         
         if cur.fetchone():
             print(f"   ⚠️ Skipping duplicate: {scenario['id']} already in this run")
@@ -102,7 +104,7 @@ def save_to_db(scenario, llm_result, checks):
             Json(checks),
             all_passed,
             Json({"model": llm_result['model'], "tokens": llm_result['tokens']}),
-            run_id
+            RUN_ID
         ))
         conn.commit()
         cur.close()
@@ -111,6 +113,38 @@ def save_to_db(scenario, llm_result, checks):
         
     except Exception as e:
         print(f"⚠️ Database error: {e}")
+
+
+def clear_old_results():
+    """Clear previous run results (optional, for fresh starts)"""
+    try:
+        DB_NAME = os.getenv("DB_NAME")
+        DB_USER = os.getenv("DB_USER")
+        DB_PASSWORD = os.getenv("DB_PASSWORD")
+        
+        if not all([DB_NAME, DB_USER, DB_PASSWORD]):
+            return
+        
+        conn = psycopg2.connect(
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host=os.getenv("DB_HOST", "localhost")
+        )
+        cur = conn.cursor()
+        
+        # Ask user if they want to clear
+        response = input("Clear previous results? (y/n): ")
+        if response.lower() == 'y':
+            cur.execute("DELETE FROM causal_audit_logs")
+            conn.commit()
+            print("✅ Previous results cleared")
+        
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"⚠️ Could not clear results: {e}")
+
 
 # ============================================================
 # SCENARIO LOADING WITH GRACEFUL FALLBACK
@@ -256,11 +290,10 @@ def process_scenario(scenario, index, total):
         'llm_result': llm_result
     }
 
+
 # ============================================================
 # TRAIN/TEST SPLIT
 # ============================================================
-
-from sklearn.model_selection import train_test_split
 
 def split_scenarios(scenarios, test_size=0.2, random_state=42):
     """
@@ -274,7 +307,6 @@ def split_scenarios(scenarios, test_size=0.2, random_state=42):
     Returns:
         train_scenarios, test_scenarios
     """
-    # Ensure we don't split by scenario ID (keep perturbations together)
     # Group by base scenario ID (without a/b/c suffix)
     base_groups = {}
     for s in scenarios:
@@ -349,41 +381,16 @@ def print_summary(results, set_name):
         'C4': c4_p/total*100,
         'C5': c5_p/total*100
     }
+
+
 # ============================================================
 # MAIN EXECUTION
 # ============================================================
 
 def main():
-
-    def clear_old_results():
-        """Clear previous run results (optional, for fresh starts)"""
-    try:
-        DB_NAME = os.getenv("DB_NAME")
-        DB_USER = os.getenv("DB_USER")
-        DB_PASSWORD = os.getenv("DB_PASSWORD")
-        
-        if not all([DB_NAME, DB_USER, DB_PASSWORD]):
-            return
-        
-        conn = psycopg2.connect(
-            dbname=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            host=os.getenv("DB_HOST", "localhost")
-        )
-        cur = conn.cursor()
-        
-        # Ask user if they want to clear
-        response = input("Clear previous results? (y/n): ")
-        if response.lower() == 'y':
-            cur.execute("DELETE FROM causal_audit_logs")
-            conn.commit()
-            print("✅ Previous results cleared")
-        
-        cur.close()
-        conn.close()
-    except Exception as e:
-        print(f"⚠️ Could not clear results: {e}")
+    # Optional: Clear previous results
+    clear_old_results()
+    
     # Load scenarios
     scenarios = load_scenarios()
     
@@ -398,14 +405,7 @@ def main():
     print(f"📚 Training set: {len(train_scenarios)} scenarios (80%)")
     print(f"🧪 Test set: {len(test_scenarios)} scenarios (20%)")
     print(f"   Note: Test set used ONLY for final evaluation, not for tuning.\n")
-    
-    # ============================================================
-    # TRAINING PHASE (for future ML models)
-    # ============================================================
-    # Currently, checkers are rule-based, so no training needed.
-    # But we keep the split for future ML-based checkers.
-    # For now, we just evaluate on both sets separately.
-    # ============================================================
+    print(f"🔑 Run ID: {RUN_ID} (all results tagged with this ID)\n")
     
     # Process training set (for reference)
     print("\n" + "█"*60)
@@ -429,6 +429,7 @@ def main():
     
     print(f"\n📄 Training results saved to results_train.json")
     print(f"📄 Test results saved to results_test.json")
+    print(f"🔑 All results tagged with run_id: {RUN_ID}")
     
     if test_summary:
         print("\n" + "█"*60)
