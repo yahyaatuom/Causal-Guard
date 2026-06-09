@@ -1,0 +1,378 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created": "2026-06-09",
+    "description": "Ground truth labels for Causal-Guard evaluation",
+    "total_scenarios": 195
+  },
+  "scenarios": {
+    "WD-01": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Hydroplaning - valid"
+    },
+    "WD-01a": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Hydroplaning - valid (time perturbation)"
+    },
+    "WD-01b": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Hydroplaning - valid (vehicle perturbation)"
+    },
+    "WD-03": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Crosswind rollover - valid"
+    },
+    "WD-03a": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Crosswind rollover - valid (load perturbation)"
+    },
+    "WD-03b": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Crosswind rollover - valid (wind perturbation)"
+    },
+    "WD-05": {
+      "C1": true,
+      "C2": true,
+      "C3": false,
+      "C4": true,
+      "C5": true,
+      "notes": "Black ice at 2°C - IMPOSSIBLE"
+    },
+    "WD-05a": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Black ice at -2°C - valid"
+    },
+    "WD-05b": {
+      "C1": true,
+      "C2": true,
+      "C3": false,
+      "C4": true,
+      "C5": true,
+      "notes": "Black ice at 5°C - IMPOSSIBLE"
+    },
+    "WD-06": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Fog + tailgating - missing wet roads"
+    },
+    "WD-07": {
+      "C1": true,
+      "C2": true,
+      "C3": false,
+      "C4": true,
+      "C5": false,
+      "notes": "Wind-blown banner - missing mechanism"
+    },
+    "WD-08": {
+      "C1": true,
+      "C2": true,
+      "C3": false,
+      "C4": true,
+      "C5": false,
+      "notes": "Snow on mountain road - missing geometry"
+    },
+    "WD-10": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Dust storm - missing factors"
+    },
+    "WD-14": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Fog + wet road - missing curve"
+    },
+    "WD-16": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Flash flood - missing underpass geometry"
+    },
+    "WD-20": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Hydroplaning on curve - missing curve"
+    },
+    "TA-01": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Unsafe lane change - valid"
+    },
+    "TA-02": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Red light violation - valid"
+    },
+    "TA-04": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Driver fatigue - valid"
+    },
+    "TA-06": {
+      "C1": true,
+      "C2": true,
+      "C3": false,
+      "C4": true,
+      "C5": true,
+      "notes": "Speeding on curve - missing physics"
+    },
+    "TA-08": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Animal hazard - valid"
+    },
+    "TA-09": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Brake fade - missing mechanism"
+    },
+    "TA-10": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Distracted driving - missing environment"
+    },
+    "TA-14": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Tailgating on wet road - valid"
+    },
+    "TA-17": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Dooring - valid"
+    },
+    "TA-19": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Tire blowout - valid"
+    },
+    "RM-01": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Unmarked lane closure - valid"
+    },
+    "RM-02": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Pothole - missing load factor"
+    },
+    "RM-03": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Barrier encroachment - valid"
+    },
+    "RM-06": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Lighting failure - valid"
+    },
+    "RM-07": {
+      "C1": true,
+      "C2": true,
+      "C3": false,
+      "C4": true,
+      "C5": false,
+      "notes": "Trench collapse - missing physics"
+    },
+    "RM-10": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Scaffolding - missing clearance"
+    },
+    "RM-11": {
+      "C1": true,
+      "C2": true,
+      "C3": false,
+      "C4": true,
+      "C5": false,
+      "notes": "Wet paint - missing friction"
+    },
+    "RM-14": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Uncovered manhole - valid"
+    },
+    "RM-16": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Bitumen spill - missing friction"
+    },
+    "RM-20": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Steam obscuration - valid"
+    },
+    "PE-01": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "NYE closure - missing capacity"
+    },
+    "PE-03": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "F1 exit - valid"
+    },
+    "PE-04": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "National Day - missing capacity"
+    },
+    "PE-06": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Concert ingress - missing rate"
+    },
+    "PE-07": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Eid prayer - missing capacity"
+    },
+    "PE-10": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "notes": "Post-F1 concert - valid"
+    },
+    "PE-12": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Stadium match - missing capacity"
+    },
+    "PE-13": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Art fair - missing screening"
+    },
+    "PE-15": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Ramadan souq - missing drop zone"
+    },
+    "PE-18": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": false,
+      "notes": "Financial week - missing capacity"
+    }
+  }
+}
