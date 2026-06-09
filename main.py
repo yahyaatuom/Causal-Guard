@@ -1,6 +1,7 @@
 # main.py
 import json
 import time
+import sys
 import os
 from sentence_transformers import SentenceTransformer
 from checkers.c1_temporal import C1TemporalChecker
@@ -19,8 +20,12 @@ from psycopg2.extras import Json
 print("🚀 Initializing Causal-Guard Validation Layer...")
 
 shared_model = SentenceTransformer('all-MiniLM-L6-v2')
-
-llm = GroqLLM()
+try:
+    llm = GroqLLM()
+except ValueError as e:
+    print(f"\n❌ Failed to initialize LLM: {e}")
+    print("Exiting. Please fix the API key issue and try again.\n")
+    sys.exit(1)
 c1_checker = C1TemporalChecker()
 c2_checker = C2SpatialChecker()
 c3_checker = C3MechanismChecker(shared_model=shared_model)
