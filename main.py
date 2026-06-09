@@ -38,38 +38,17 @@ c5_checker = C5CompletenessChecker()
 # ============================================================
 
 def save_to_db(scenario, llm_result, checks):
-    """Saves results to PostgreSQL for long-term auditing."""
-    
-    # Get database credentials from environment (NO HARDCODED FALLBACK)
-    DB_NAME = os.getenv("DB_NAME")
-    DB_USER = os.getenv("DB_USER")
-    DB_PASSWORD = os.getenv("DB_PASSWORD")
-    DB_HOST = os.getenv("DB_HOST", "localhost")
-    
-    if not all([DB_NAME, DB_USER, DB_PASSWORD]):
-        print("⚠️ Warning: Database not configured. Results will not be saved.")
-        print("   Add DB_NAME, DB_USER, DB_PASSWORD to .env to enable database logging.\n")
-    else:
-        print("✅ Database configured. Results will be saved.\n")
-    
-    # Validate required credentials
-    if not all([DB_NAME, DB_USER, DB_PASSWORD]):
-        missing = []
-        if not DB_NAME:
-            missing.append("DB_NAME")
-        if not DB_USER:
-            missing.append("DB_USER")
-        if not DB_PASSWORD:
-            missing.append("DB_PASSWORD")
-        
-        print(f"⚠️ Database credentials missing: {', '.join(missing)}. Skipping save.")
-        print("   To enable database logging, add these to your .env file:")
-        print("   DB_NAME=causal_guard")
-        print("   DB_USER=postgres")
-        print("   DB_PASSWORD=your_password")
-        return
-    
+    """Saves results to PostgreSQL with deduplication."""
     try:
+        DB_NAME = os.getenv("DB_NAME")
+        DB_USER = os.getenv("DB_USER")
+        DB_PASSWORD = os.getenv("DB_PASSWORD")
+        DB_HOST = os.getenv("DB_HOST", "localhost")
+        
+        if not all([DB_NAME, DB_USER, DB_PASSWORD]):
+            print("⚠️ Database credentials missing. Skipping save.")
+            return
+        
         conn = psycopg2.connect(
             dbname=DB_NAME,
             user=DB_USER,
@@ -78,7 +57,7 @@ def save_to_db(scenario, llm_result, checks):
         )
         cur = conn.cursor()
         
-        # Create table if not exists (idempotent)
+        # Create table if not exists
         cur.execute("""
             CREATE TABLE IF NOT EXISTS causal_audit_logs (
                 id SERIAL PRIMARY KEY,
@@ -88,16 +67,33 @@ def save_to_db(scenario, llm_result, checks):
                 check_results JSONB,
                 all_passed BOOLEAN,
                 metadata JSONB,
+                run_id VARCHAR(50),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        
+        # Generate a unique run_id for this execution
+        import uuid
+        run_id = str(uuid.uuid4())[:8]
+        
+        # Check if this scenario already exists for this run
+        cur.execute("""
+            SELECT id FROM causal_audit_logs 
+            WHERE scenario_id = %s AND run_id = %s
+        """, (scenario['id'], run_id))
+        
+        if cur.fetchone():
+            print(f"   ⚠️ Skipping duplicate: {scenario['id']} already in this run")
+            cur.close()
+            conn.close()
+            return
         
         all_passed = all(c['passed'] for c in checks.values())
         
         insert_query = """
             INSERT INTO causal_audit_logs 
-            (scenario_id, incident_category, llm_explanation, check_results, all_passed, metadata)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            (scenario_id, incident_category, llm_explanation, check_results, all_passed, metadata, run_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         cur.execute(insert_query, (
             scenario['id'],
@@ -105,19 +101,16 @@ def save_to_db(scenario, llm_result, checks):
             llm_result['explanation'],
             Json(checks),
             all_passed,
-            Json({"model": llm_result['model'], "tokens": llm_result['tokens']})
+            Json({"model": llm_result['model'], "tokens": llm_result['tokens']}),
+            run_id
         ))
         conn.commit()
         cur.close()
         conn.close()
         print("   💾 Saved to database")
         
-    except psycopg2.OperationalError as e:
-        print(f"⚠️ Database connection failed: {e}")
-        print("   Check that PostgreSQL is running and credentials are correct.")
     except Exception as e:
         print(f"⚠️ Database error: {e}")
-
 
 # ============================================================
 # SCENARIO LOADING WITH GRACEFUL FALLBACK
@@ -361,6 +354,36 @@ def print_summary(results, set_name):
 # ============================================================
 
 def main():
+
+    def clear_old_results():
+        """Clear previous run results (optional, for fresh starts)"""
+    try:
+        DB_NAME = os.getenv("DB_NAME")
+        DB_USER = os.getenv("DB_USER")
+        DB_PASSWORD = os.getenv("DB_PASSWORD")
+        
+        if not all([DB_NAME, DB_USER, DB_PASSWORD]):
+            return
+        
+        conn = psycopg2.connect(
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host=os.getenv("DB_HOST", "localhost")
+        )
+        cur = conn.cursor()
+        
+        # Ask user if they want to clear
+        response = input("Clear previous results? (y/n): ")
+        if response.lower() == 'y':
+            cur.execute("DELETE FROM causal_audit_logs")
+            conn.commit()
+            print("✅ Previous results cleared")
+        
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"⚠️ Could not clear results: {e}")
     # Load scenarios
     scenarios = load_scenarios()
     
