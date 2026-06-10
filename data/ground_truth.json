@@ -191,5 +191,84 @@
       "C1": true, "C2": true, "C3": true, "C4": true, "C5": false,
       "notes": "Financial week - C5 violation (missing capacity)"
     }
+  },  "C1-VIOLATION-01": {
+    "C1": false, "C2": true, "C3": true, "C4": true, "C5": true,
+    "notes": "Effect before cause: Maintenance at 11AM caused congestion at 8AM"
+  },
+  "C1-VIOLATION-02": {
+    "C1": false, "C2": true, "C3": true, "C4": true, "C5": true,
+    "notes": "Effect before cause: Ambulance arrival at 7:15 PM caused accident at 7:30 PM"
+  },
+  "C1-VIOLATION-03": {
+    "C1": false, "C2": true, "C3": true, "C4": true, "C5": true,
+    "notes": "Effect before cause: Road closure at 2:30 PM caused morning congestion"
+  },
+  "C1-VIOLATION-04": {
+    "C1": false, "C2": true, "C3": true, "C4": true, "C5": true,
+    "notes": "Effect before cause: Emergency response at 5:20 PM caused incident at 5:00 PM"
+  },
+  "C1-VIOLATION-05": {
+    "C1": false, "C2": true, "C3": true, "C4": true, "C5": true,
+    "notes": "Effect before cause: Cleanup at 9:45 PM caused crash at 9:30 PM"
+  },
+  "C1-VIOLATION-06": {
+    "C1": false, "C2": true, "C3": true, "C4": true, "C5": true,
+    "notes": "Effect before cause: Aftermath investigation at 4:10 PM caused collision at 4:00 PM"
+  },
+  "C1-VIOLATION-07": {
+    "C1": false, "C2": true, "C3": true, "C4": true, "C5": true,
+    "notes": "Effect before cause: Insurance claim filed at 11:00 AM caused accident at 10:45 AM"
+  },
+  "C1-VIOLATION-08": {
+    "C1": false, "C2": true, "C3": true, "C4": true, "C5": true,
+    "notes": "Effect before cause: Media coverage at 3:30 PM caused incident at 3:00 PM"
+  },
+  "C1-VIOLATION-09": {
+    "C1": false, "C2": true, "C3": true, "C4": true, "C5": true,
+    "notes": "Effect before cause: Apology from city official at 7:00 PM caused crash at 6:30 PM"
+  },
+  "C1-VIOLATION-10": {
+    "C1": false, "C2": true, "C3": true, "C4": true, "C5": true,
+    "notes": "Effect before cause: Policy change at 1:00 PM caused morning accident"
+  },
+    "C4-VIOLATION-01": {
+    "C1": true, "C2": true, "C3": true, "C4": false, "C5": true,
+    "notes": "Spurious: Blamed 'Tuesday afternoon' as cause of accident"
+  },
+  "C4-VIOLATION-02": {
+    "C1": true, "C2": true, "C3": true, "C4": false, "C5": true,
+    "notes": "Spurious: Blamed 'red car' for being more accident-prone"
+  },
+  "C4-VIOLATION-03": {
+    "C1": true, "C2": true, "C3": true, "C4": false, "C5": true,
+    "notes": "Spurious: Blamed 'Friday the 13th' as causal factor"
+  },
+  "C4-VIOLATION-04": {
+    "C1": true, "C2": true, "C3": true, "C4": false, "C5": true,
+    "notes": "Spurious: Blamed 'full moon' for increased accidents"
+  },
+  "C4-VIOLATION-05": {
+    "C1": true, "C2": true, "C3": true, "C4": false, "C5": true,
+    "notes": "Spurious: Blamed 'driver being Libra zodiac sign'"
+  },
+  "C4-VIOLATION-06": {
+    "C1": true, "C2": true, "C3": true, "C4": false, "C5": true,
+    "notes": "Spurious: Blamed 'morning coffee consumption' for aggressive driving"
+  },
+  "C4-VIOLATION-07": {
+    "C1": true, "C2": true, "C3": true, "C4": false, "C5": true,
+    "notes": "Spurious: Blamed 'evening news broadcast' for distraction"
+  },
+  "C4-VIOLATION-08": {
+    "C1": true, "C2": true, "C3": true, "C4": false, "C5": true,
+    "notes": "Spurious: Blamed 'birthday of driver' as contributing factor"
+  },
+  "C4-VIOLATION-09": {
+    "C1": true, "C2": true, "C3": true, "C4": false, "C5": true,
+    "notes": "Spurious: Blamed 'stock market performance' for road rage"
+  },
+  "C4-VIOLATION-10": {
+    "C1": true, "C2": true, "C3": true, "C4": false, "C5": true,
+    "notes": "Spurious: Blamed 'sports team winning' for reckless behavior"
   }
 }
