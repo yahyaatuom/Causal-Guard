@@ -97,10 +97,13 @@ class C2SpatialChecker:
                 best_score = ratio
                 best_name = sc_name
         
-        if best_score > 0.7:
-            return True, f"Match ({best_score:.0%}): {spatial_location} ≈ {best_name}", best_score
-        
-        return False, f"Location '{spatial_location}' not found in scenario", 0.3
+        # Increase similarity threshold for acceptance
+        if best_score > 0.85:  # Was 0.7 — much stricter
+            return True, f"Good match: {spatial_location} ≈ {best_name}", best_score
+        elif best_score > 0.7:
+            return True, f"Partial match: {spatial_location} ≈ {best_name}", best_score * 0.8
+        else:
+            return False, f"Location '{spatial_location}' not found", 0.3
     
     def _check_free_text(self, text, scenario_locations, scenario):
         """Fallback to free text parsing"""
