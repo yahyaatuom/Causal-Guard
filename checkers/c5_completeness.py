@@ -46,7 +46,10 @@ class C5CompletenessChecker:
                 'reason': 'No required factors specified',
                 'details': {'warning': 'Missing minimal_sufficient_set in scenario'}
             }
-        
+        print(f"\n🔍 C5 DEBUG for {scenario.get('id', 'unknown')}:")
+        print(f"   Required factors: {required_factors}")
+        print(f"   Mentioned (structured): {contributing_factors}")
+        print(f"   Mentioned (text): {explanation_text[:200]}...")
         # Adjust threshold based on context
         if context:
             mechanism_failed = context.has_violation('C3')
@@ -69,6 +72,10 @@ class C5CompletenessChecker:
             else:
                 missing.append(factor)
         
+        print(f"   Final mentioned: {mentioned}")
+        print(f"   Final missing: {missing}")
+        print(f" coverage: {coverage}")
+        print(f"  passed: {passed}")
         # Identify core factors
         core_factors = self._get_core_factors(required_factors, scenario)
         core_missing = [f for f in core_factors if f in missing]
